@@ -1,4 +1,5 @@
 load("expParas.RData")
+library(latex2exp)
 library("ggplot2"); library("Hmisc"); library("coin")
 library("dplyr"); library("tidyr")
 source("subFxs/plotThemes.R")
@@ -43,26 +44,43 @@ expPara %>% filter(passCheck ) %>% select(c(paraNames, "condition")) %>%
 fileName = sprintf("%s/%s/hist.pdf", "figures/expParaAnalysis", modelName)
 ggsave(fileName, width = 8, height = 4)
 
+
+# optimism bias
+expPara %>% filter(passCheck) %>%
+  ggplot(aes(log(alphaR/alphaU))) +
+  geom_histogram(bins = 8) +
+  myTheme + 
+  xlab(TeX('$log(\\alpha_r/\\alpha_u)$')) +
+  ylab("Count") +
+  geom_vline(aes(xintercept = 0), color = "red", linetype = 2)
+ggsave("figures/expParaAnalysis/optimism.eps", width = 6, height = 6)
+ggsave("figures/expParaAnalysis/optimism.png", width = 6, height = 6)
+
+# temproal discounting
+wilcoxResults = wilcox.test(expPara$gamma - 1)
+expPara %>% filter(passCheck) %>% ggplot(aes(gamma)) +
+  geom_histogram(bins = 8) +
+  myTheme  + 
+  xlab(TeX('$\\gamma$')) +
+  ylab("Count") + xlim(c(0.65, 1.05))
+ggsave("figures/expParaAnalysis/discounting.eps", width = 4, height = 4)
+ggsave("figures/expParaAnalysis/discounting.png", width = 4, height = 4)
+
+
 # summary stats for expPara
 expPara %>% filter(passCheck) %>% select(c(paraNames)) %>%
   gather(key = "para", value = "value") %>%
   mutate(para = factor(para, levels = paraNames, labels = paraNames ))%>% 
   group_by(para) %>% summarise(mu = mean(value), median = median(value))
 
-
-# plot the correlation between adaptation and parameters 
-adapation = sumStats$muWTW[seq(2, 84, by = 2)] -  sumStats$muWTW[seq(1, 84, by = 2)]
-data.frame(adapation, LR = expPara$phi_pos, passCheck) %>%
-  filter(passCheck)  %>%
-  ggplot(aes(LR, adapation)) + geom_point() +
-  xlab("Reward sensitivity") + ylab("Flexibility") + myTheme 
-
-data.frame(adapation, LP = expPara$phi_neg, passCheck) %>%
-  filter(passCheck)  %>%
-  ggplot(aes(LP, adapation)) + geom_point() +
-  xlab("Reward sensitivity") + ylab("Flexibility") + myTheme 
+# test 
+expPara %>% filter(passCheck) %>% 
+  summarise(median(gamma), median(log(alphaR/alphaU)))
 
 
+wilcoxResults = wilcox.test(expPara$gamma - 1)
+logOdds = log(expPara$alphaR / expPara$alphaU)
+wilcoxResults = wilcox.test(logOdds)
 
 
 

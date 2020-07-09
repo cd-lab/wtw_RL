@@ -30,6 +30,7 @@ colorData = data.frame(
 greyData = data.frame(
   xmin = 1:2 * blockSec - max(delayMaxs), xmax = 1:2 * blockSec
 )
+timeWTW_[[1]][length(timeWTW_[[1]])] = NA
 data.frame(wtw = unlist(timeWTW_),
            time = rep(seq(0, blockSec * nBlock -1, by = 1), nSub),
            condition = rep(rep(c("LP", "HP"), each = length(tGrid))), nSub) %>%
@@ -57,6 +58,8 @@ MFResults = MFAnalysis(isTrct = T)
 sumStats = MFResults[['sumStats']]
 wTest = wilcox.test( sumStats[sumStats$condition == "HP", "muWTW"],
                      sumStats[sumStats$condition == "LP", "muWTW"],paired = T)
+sumStats %>% group_by(condition) %>% summarise(median = median(muWTW))
+aovRes <- aov(muWTW ~ (condition) + Error(ID/condition), contrasts = contr.sum, data = sumStats)
 data.frame(muWTWHP = sumStats$muWTW[sumStats$condition == 'HP'],
            muWTWLP = sumStats$muWTW[sumStats$condition == 'LP']) %>%
   ggplot(aes(muWTWLP, muWTWHP)) +
@@ -69,10 +72,13 @@ data.frame(muWTWHP = sumStats$muWTW[sumStats$condition == 'HP'],
 ggsave("figures/MFPlot/muWTW_comparison.eps", width = 4, height = 4)
 ggsave("figures/MFPlot/muWTW_comparison.png", width = 4, height = 4)
 
+
 ################### plot CIPs in two environments ###################
 # test
 wTest = wilcox.test( sumStats[sumStats$condition == "HP", "stdWTW"],
                      sumStats[sumStats$condition == "LP", "stdWTW"],paired = T)
+sumStats %>% group_by(condition) %>% summarise(median = median(stdWTW))
+aovRes <- aov(stdWTW ~ (condition) + Error(ID/condition), contrasts = contr.sum, data = sumStats)
 # plot
 data.frame(stdWTWHP = sumStats$stdWTW[sumStats$condition == 'HP'],
            stdWTWLP = sumStats$stdWTW[sumStats$condition == 'LP']) %>%

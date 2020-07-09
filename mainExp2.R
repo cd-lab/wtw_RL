@@ -17,7 +17,7 @@ MFPlot()
 
 ##################### model fit #############################
 ## warnings: this function is time-consuming and we don't recommend running it locally
-## Fortuantly, we saved its outputs for you so you can directly move on to the following steps
+## We saved its outputs for you so you can directly move on to the next step
 source("expModelFit.R")
 for(modelName in modelNames){
   # fit all participants

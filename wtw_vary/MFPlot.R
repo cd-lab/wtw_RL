@@ -87,6 +87,7 @@ MFPlot = function(){
     wTest = wilcox.test( blockStats[blockStats$condition == "HP", "muWTW"],
                          blockStats[blockStats$condition == "LP", "muWTW"],paired = T)
     blockStats %>% group_by(condition) %>% summarise(median = median(muWTW))
+    aovRes <- aov(muWTW ~ condition + Error(id/(condition)),contrasts = contr.sum, data = blockStats)
     # plot
     data.frame(muWTWHP = blockStats$muWTW[blockStats$condition == 'HP'],
                muWTWLP = blockStats$muWTW[blockStats$condition == 'LP'],
@@ -105,6 +106,7 @@ MFPlot = function(){
     wTest = wilcox.test( blockStats[blockStats$condition == "HP", "stdWTW"],
                          blockStats[blockStats$condition == "LP", "stdWTW"],paired = T)
     blockStats %>% group_by(condition) %>% summarise(median = median(stdWTW))
+    aovRes <- aov(stdWTW ~ condition + Error(id/(condition)),contrasts = contr.sum, data = blockStats)
     # plot
     data.frame(stdWTWHP = blockStats$stdWTW[blockStats$condition == 'HP'],
                stdWTWLP = blockStats$stdWTW[blockStats$condition == 'LP'],

@@ -138,82 +138,6 @@ truncateTrials = function(data, startTidx, endTidx){
 }
 
 
-# correlation plot
-# the first col of plotData is x, the second col is y, the third col is the group
-plotCorrelation = function(data, dotColor = "black",isRank){
-  conditions = c("HP", "LP")
-  colnames(data) = c("x", "y", "cond")
-  
-  # calculate correlations
-  corTests = lapply(1:2, function(i) cor.test(data[data$cond == conditions[i], "x"],
-                                              data[data$cond == conditions[i], "y"],
-                                              method = "spearman"))
-  # corTestsPerm = lapply(1:2, function(i) spearman_test(data[data$cond == conditions[i], "x"] ~ data[data$cond == conditions[i], "y"]))
-  rhos = sapply(1:2, function(i) round(as.numeric(corTests[[i]]$estimate), 3))
-  ps = sapply(1:2, function(i) round(corTests[[i]]$p.value, 3))
-  # ps = sapply(1:2, function(i) round(as.numeric(pvalue(corTestsPerm[[i]])), 3))
-  
-  textColors = ifelse(ps < 0.05, "red", "blue")
-  textData = data.frame(label = paste(rhos, "(p =", ps, ")"),
-                        cond= c("HP", "LP"), color = textColors)
-  # prepare rank 
-  if(isRank){
-    plotData = data %>% group_by(cond) %>% mutate(xRank = rank(x), yRank = rank(y))
-  }
-  
-  # plot
-  if(isRank){
-    p0 = ggplot(plotData, aes(xRank, yRank)) + geom_point(size = 3, color = dotColor, fill = dotColor)
-  }else{
-    p0 = ggplot(plotData, aes(x, y)) + geom_point(size = 3, color = dotColor, fill = dotColor)
-  }
-  p = p0  + geom_text(data = textData,aes(x = -Inf,y = -Inf, label = label),
-                      hjust   = -0.2,vjust = -1,color = textColors, size = 5, fontface = 2, color = "#252525") +
-    facet_grid(~cond)
-  return(p)
-} 
-
-
-getCorrelation = function(data){
-  conditions = c("HP", "LP")
-  colnames(data) = c("x", "y", "cond")
-  
-  # calculate correlations
-  # since we can't get rho from the later
-  corTests = lapply(1:2, function(i) cor.test(data[data$cond == conditions[i], "x"],
-                                              data[data$cond == conditions[i], "y"],
-                                              method = "kendall") 
-  )
-  # supposedly, kendall can deal with data with a lot of ties
-  # corTestsPerm = lapply(1:2, function(i) spearman_test(data[data$cond == conditions[i], "x"] ~
-  #                                                    data[data$cond == conditions[i], "y"]))
-  rhos = sapply(1:2, function(i) as.numeric(corTests[[i]]$estimate))
-  ps = sapply(1:2, function(i) round(corTests[[i]]$p.value, 3))
-  # ps = sapply(1:2, function(i) round(pvalue(corTestsPerm [[i]]), 3))
-  return(list(rhos = rhos, ps = ps))
-}
-
-getPartCorrelation = function(data){
-  library("ppcor")
-  
-  conditions = c("HP", "LP")
-  colnames(data) = c("x", "y", "z", "cond")
-  
-  # calculate correlations
-  # since we can't get rho from the later
-  corTests = lapply(1:2, function(i) pcor.test(data[data$cond == conditions[i], "x"],
-                                               data[data$cond == conditions[i], "y"],
-                                               data[data$cond == conditions[i], "z"],
-                                               method = "kendall") 
-  )
-  # supposedly, kendall can deal with data with a lot of ties
-  # corTestsPerm = lapply(1:2, function(i) spearman_test(data[data$cond == conditions[i], "x"] ~
-  #                                                    data[data$cond == conditions[i], "y"]))
-  rhos = sapply(1:2, function(i) as.numeric(corTests[[i]]$estimate))
-  ps = sapply(1:2, function(i) round(corTests[[i]]$p.value, 3))
-  # ps = sapply(1:2, function(i) round(pvalue(corTestsPerm [[i]]), 3))
-  return(list(rhos = rhos, ps = ps))
-}
 
 # integrate stacked data from several blocks 
 block2session = function(thisTrialData){
@@ -234,4 +158,35 @@ block2session = function(thisTrialData){
   return(thisTrialData)
 }
 
-
+# resample pair-wise sequences
+# inputs:
+# ys: y in the original sequence
+# xs: x in the original sequence
+# Xs: x in the new sequence
+# outputs: 
+# Ys : y in the new sequence 
+resample = function(ys, xs, Xs){
+  isBreak = F
+  # initialize Ys
+  Ys = rep(NA, length = length(Xs))
+  for(i in 1 : length(Xs)){
+    # for each X in Xs
+    X = Xs[i]
+    # find the index of cloest x value on the right
+    # if closest_right_x_idx exists 
+    if(X <= tail(xs,1)) {
+      # Y takes the corresonding y value
+      closest_right_x_idx = min(which(xs >= X))
+      Ys[i] = ys[closest_right_x_idx]
+    }else{
+      isBreak = T
+      lastY = i - 1
+      break
+    }
+  }
+  # fill the remaining elements in Ys by the exisiting last element
+  if(isBreak){
+    Ys[(lastY + 1) : length(Xs)] = Ys[lastY]
+  }
+  return(Ys)
+}
