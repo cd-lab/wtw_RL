@@ -12,8 +12,7 @@ source("expSchematics.R")
 expSchematics(smallReward , iti, isPlot = T)
 
 ###################### model-free analysis ########################
-source("MFPlot.R")
-MFPlot()
+source("MFPlot.R")å
 
 ##################### model fit #############################
 ## warnings: this function is time-consuming and we don't recommend running it locally

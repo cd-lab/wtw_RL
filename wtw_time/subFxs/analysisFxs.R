@@ -9,12 +9,21 @@ trialPlots <- function(thisTrialData) {
   ## black : scheduledTime on non-rewarded trials
   p = thisTrialData %>%
     ggplot(aes(trialNum, timeWaited,color = factor(trialEarnings))) +
-    geom_point() + geom_line() + scale_color_manual(values = c("red", "blue")) +
+    geom_point() + geom_line() +
     geom_point(data = thisTrialData[thisTrialData$trialEarnings == 0, ],
                aes(trialNum, scheduledWait),
                color = 'black') +
     xlab("Trial num") + ylab("Time (s)") + 
     myTheme 
+  
+  if(all(thisTrialData$trialEarnings == smallReward)){
+    p = p + scale_color_manual(values = c("red")) 
+  }else if(all(thisTrialData$trialEarnings == largeReward)){
+    p = p + scale_color_manual(values = c("blue")) 
+  }else{
+    p = p + scale_color_manual(values = c("red", "blue"))
+  }
+  
   print(p)
   return(p)
 }
@@ -66,7 +75,13 @@ kmsc <- function(thisTrialData, tMax, plotKMSC=FALSE, grid) {
     print(p)
   }
   # resample the survival curve for averaging 
-  kmOnGrid = resample(kmF, kmT, kmGrid)
+  kmOnGrid = vector()
+  for (gIdx in 1:length(grid)) {
+    g = grid[gIdx]
+    # use the last point where t is less than or equal to the current grid value
+    # this gives a smoother visualization than min(which(kmT >= g)).
+    kmOnGrid[gIdx] = kmF[max(which(kmT<=g))]
+  }
   return(list(kmT=kmT, kmF=kmF, auc=auc, kmOnGrid = kmOnGrid, stdWTW = stdWTW))
 }
 

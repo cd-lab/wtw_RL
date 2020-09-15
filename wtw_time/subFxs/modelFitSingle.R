@@ -46,7 +46,7 @@ modelFitSingle = function(id, thisTrialData, modelName, paraNames, model, config
     lastDecPoints = floor(thisTrialData$timeWaited / stepSec) + 1
     ## when a trial ends 
     Ts = thisTrialData$timeWaited + iti
-    Ts[thisTrialData$trialEarnings == 0] = floor(Ts[thisTrialData$trialEarnings == 0] / stepSec) * stepSec + iti
+    Ts[thisTrialData$trialEarnings == 0] = floor(Ts[thisTrialData$trialEarnings == 0] / stepSec) * stepSec 
     ## condition idx
     cIdxs = ifelse(thisTrialData$condition == "HP", 1, 2)
     ## the theoretic present value of the awaited reward sampled at 1 hz

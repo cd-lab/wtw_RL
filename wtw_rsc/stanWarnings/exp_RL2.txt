@@ -1,0 +1,69 @@
+
+Finish s62 !
+Finish s1 !
+Finish s2 !
+Finish s63 !
+Finish s3 !
+Finish s64 !
+Finish s7 !
+Finish s65 !
+Finish s9 !
+Finish s69 !
+Finish s11 !
+Finish s71 !
+Finish s13 !
+Finish s74 !
+Finish s15 !
+Finish s16 !
+Finish s75 !
+Finish s77 !
+Finish s17 !
+Finish s78 !
+Finish s20 !
+Finish s79 !
+Finish s24 !
+Finish s84 !
+Finish s85 !
+Finish s87 !
+Finish s25 !
+Finish s91 !
+Finish s26 !
+Finish s29 !
+Finish s92 !
+Finish s94 !
+Finish s31 !
+Finish s96 !
+Finish s32 !
+RL2 s32 simpleWarning: There were 1 divergent transitions after warmup. Increasing adapt_delta above 0.999 may help. See
+http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
+
+Finish s32 !
+RL2 s32 simpleWarning: Examine the pairs() plot to diagnose sampling problems
+
+
+Finish s32 !
+Finish s36 !
+Finish s100 !
+Finish s38 !
+Finish s101 !
+Finish s42 !
+Finish s102 !
+Finish s44 !
+Finish s105 !
+Finish s106 !
+Finish s45 !
+Finish s108 !
+Finish s46 !
+Finish s109 !
+Finish s110 !
+Finish s47 !
+Finish s111 !
+Finish s112 !
+Finish s51 !
+Finish s52 !
+Finish s119 !
+Finish s53 !
+Finish s56 !
+Finish s120 !
+Finish s58 !
+Finish s59 !

@@ -33,13 +33,13 @@ passCheck = checkFit(paraNames, expPara)
 # plot hist 
 # paraNames = c("LR", "LP", expression(tau), expression(gamma), "P")
 # paraNames = c("LR", "LP", expression(tau), "P")
-paraNames = paraNames
-expPara$condition = sumStats$condition[1 : nrow(expPara)]
-expPara %>% filter(passCheck ) %>% select(c(paraNames, "condition")) %>%
-  gather(-c("condition"), key = "para", value = "value") %>%
-  mutate(para = factor(para, levels = paraNames, labels = paraNames ))%>%
-  ggplot(aes(value)) + geom_histogram(bins = 8) +
-  facet_grid(condition ~ para, scales = "free", labeller = label_parsed) + 
+plotData = expPara %>% filter(passCheck ) %>% select(c(paraNames)) %>%
+  gather(key = "para", value = "value") %>%
+  mutate(para = factor(para, levels = paraNames, labels = paraNames))
+
+plotData$para = recode(plotData$para, alphaR = 'alpha[r]', alphaU = 'alpha[u]', prior = 'eta')
+plotData %>% ggplot(aes(value)) + geom_histogram(bins = 8) +
+  facet_grid(~ para, scales = "free", labeller = label_parsed) + 
   myTheme + xlab(" ") + ylab(" ")
 fileName = sprintf("%s/%s/hist.pdf", "figures/expParaAnalysis", modelName)
 ggsave(fileName, width = 8, height = 4)
@@ -57,7 +57,6 @@ ggsave("figures/expParaAnalysis/optimism.eps", width = 6, height = 6)
 ggsave("figures/expParaAnalysis/optimism.png", width = 6, height = 6)
 
 # temproal discounting
-wilcoxResults = wilcox.test(expPara$gamma - 1)
 expPara %>% filter(passCheck) %>% ggplot(aes(gamma)) +
   geom_histogram(bins = 8) +
   myTheme  + 
@@ -73,14 +72,16 @@ expPara %>% filter(passCheck) %>% select(c(paraNames)) %>%
   mutate(para = factor(para, levels = paraNames, labels = paraNames ))%>% 
   group_by(para) %>% summarise(mu = mean(value), median = median(value))
 
-# test 
-expPara %>% filter(passCheck) %>% 
-  summarise(median(gamma), median(log(alphaR/alphaU)))
-
-
+# test
 wilcoxResults = wilcox.test(expPara$gamma - 1)
 logOdds = log(expPara$alphaR / expPara$alphaU)
 wilcoxResults = wilcox.test(logOdds)
 
-
+# corr
+plotData = expPara %>% select(c("alphaR", "alphaU", "tau", "gamma", "prior")) %>% filter(passCheck) 
+corMx = cor(plotData, method = "spearman")
+library("corrplot")
+p = corrplot(corMx, method="number", type="upper")
+fileName = sprintf("%s/%s/corr.pdf", "figures/expParaAnalysis", modelName)
+ggsave(fileName, p, width = 6, height = 6)
 

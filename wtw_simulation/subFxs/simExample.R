@@ -9,6 +9,7 @@ simExample = function(){
   set.seed(123)
   
   # create output directories
+  dir.create("figures")
   dir.create("figures/simulation/")
   dir.create("figures/simulation/example")
   
@@ -34,7 +35,7 @@ simExample = function(){
   paraNames = getParaNames(modelName)
   paraNames = factor(paraNames, levels = paraNames)
   nPara = length(paraNames)
-  
+
   # num of repetitions 
   nRep = 10
   duration = 120 * 60
@@ -46,17 +47,21 @@ simExample = function(){
   LPauc_ = matrix(NA, nrow =  5, ncol = nRep)
   for(i in 1 : nRep){
     # HP 
-    tempt = simModel(c(0.05, 0.05, 5, 0.85, 6), "HP", duration, normResults)
+    # tempt = simModel(c(0.05, 0.05, 5, 0.85, 6), "HP", duration, normResults)
+    tempt = simModel(c(0.1, 0.1, 2, 0.85, 3), "HP", duration, normResults)
     HPSim_[[i]] = tempt
     tempt$Qwaits_ = NULL
+    tempt$Gs_ = NULL
     tempt = as.data.frame(tempt)
     HPauc_[1 : 4,i] = sapply(1 : 4, function(x) kmsc(tempt[(i-1) * 4 * 60 <= tempt$sellTime & tempt$sellTime < i * 4 * 60,], min(delayMaxs), F, kmGrid)$auc)
     HPauc_[5,i] = kmsc(tempt[116 * 60 <= tempt$sellTime,], min(delayMaxs), F, kmGrid)$auc
     
     # LP
-    tempt  = simModel(c(0.05, 0.05, 5, 0.85, 6), "LP", duration, normResults)
+    # tempt  = simModel(c(0.05, 0.05, 5, 0.85, 6), "LP", duration, normResults)
+    tempt  = simModel(c(0.05, 0.05, 2, 0.85, 3), "LP", duration, normResults)
     LPSim_[[i]] = tempt
-    tempt$Qwaits_ = NULL
+    tempt$Qwaits_ = NULL;
+    tempt$Gs_ = NULL
     tempt = as.data.frame(tempt)
     LPauc_[1 : 4,i] = sapply(1 : 4, function(x) kmsc(tempt[(i-1) * 4 * 60 <= tempt$sellTime & tempt$sellTime < i * 4 * 60,], min(delayMaxs), F, kmGrid)$auc)
     LPauc_[5,i] = kmsc(tempt[116 * 60 <= tempt$sellTime,], min(delayMaxs), F, kmGrid)$auc
@@ -89,7 +94,68 @@ simExample = function(){
     geom_point(x = 16, y = asyHPAUC, color = conditionColors[1], shape = 8) + 
     geom_point(x = 16, y = asyLPAUC, color = conditionColors[2], shape = 8)
     ggsave("figures/simulation/example/auc.png", width = 3, height = 3)
+  
+  # plot 
+  exampleSim = HPSim_[[1]]
+  exampleQwaits = exampleSim$Qwaits_
+  exampleGs = exampleSim$Gs_
+  exampleRs = exampleSim$trialEarnings
+  exampleTs = exampleSim$timeWaited
+  exampleTs[exampleRs == 10] = exampleSim$scheduledWait[exampleRs== 10]
+  exampleV0 = exampleSim$V0_
+  
+  a = lapply(LPSim_, FUN = function(i) sum(LPSim_$trialEarnings))
+  ## plot Qwaits
+  for(i in 1 : 4){
+    if(i > 1){
+      rewardColor = ifelse(exampleRs[i-1] == 10, "red", "black")
+      data.frame(
+        time = 0 : (nrow(exampleQwaits) + 1),
+        Qwait = c(exampleV0[i], NA, as.vector(exampleQwaits[,i]))
+      ) %>% ggplot(aes(time, Qwait)) + geom_point(color = conditionColors[1]) +
+        myTheme + ylab("Value") + xlab("t") +
+        ylim(c(0, 12)) +
+        geom_point(aes(exampleTs[i-1] + 2, 12), color =  rewardColor, inherit.aes = F, size = 4) +
+        ylim(c(0, 12)) 
+    }else{
+      data.frame(
+        time = 0 : (nrow(exampleQwaits) + 1),
+        Qwait = c(exampleV0[i], NA, as.vector(exampleQwaits[,i]))
+      ) %>% ggplot(aes(time, Qwait)) + geom_point(color = conditionColors[1]) +
+        myTheme + ylab("Value") + xlab("t") +
+        ylim(c(0, 12)) 
+    }
+    ggsave(sprintf("figures/simulation/example/snippet-Qwait%d.png", i), width = 3, height = 3) 
+  }
 
+  ## plot Gs
+  for(i in 1 : 4){
+    G = exampleSim$Gs_[,i]
+    G[G == 0] = NA
+    data.frame(
+      time = 0 : (nrow(exampleQwaits) + 1),
+      G = c(G[1] * 0.85, NA,  G)
+    ) %>% ggplot(aes(time, G)) + geom_point(color = conditionColors[1]) +
+      myTheme  + ylab("G(t)") + xlab("t") + ylim(0, 15)
+    ggsave(sprintf("figures/simulation/example/snippet-G%d.png", i), width = 3, height = 3) 
+  }
+  
+  ## plot action
+  tWaits = 1 : 21
+  for(i in 1 : 3){
+    action = ifelse(tWaits <= exampleSim$timeWaited[i], 1, NA)
+    f = data.frame(
+      time = 1 : nrow(exampleQwaits),
+      action = action
+    ) %>% ggplot(aes(time, action)) + geom_point() +
+      myTheme  + ylab("Wait") + xlab("t") + 
+      ylim(c(0,1))
+    if(exampleSim$trialEarnings[i] > 0){
+      f = f + geom_point(aes(x = ))
+    }
+    
+  }
+  
   # Qwaits in HP and LP
   nCut = 5 # five obervations
   nHPSteps = nrow(HPSim_[[1]]$Qwaits_) - 1

@@ -1,0 +1,15 @@
+
+QL1 s1 simpleWarning: There were 1 chains where the estimated Bayesian Fraction of Missing Information was low. See
+http://mc-stan.org/misc/warnings.html#bfmi-low
+
+QL1 s1 simpleWarning: Examine the pairs() plot to diagnose sampling problems
+
+
+QL1 s1 simpleWarning: The largest R-hat is 1.54, indicating chains have not mixed.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#r-hat
+
+QL1 s1 simpleWarning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#bulk-ess
+

@@ -38,15 +38,26 @@ expPara = loadExpPara(paraNames, dirName)
 passCheck = checkFit(paraNames, expPara)
 
 # plot hist 
-paraLabels = c(expression(alpha_R), expression(alpha_U), expression(tau), expression(gamma), expression("eta"))
-expPara %>% filter(passCheck ) %>% select(c(paraNames)) %>%
+plotData = expPara %>% filter(passCheck ) %>% select(c(paraNames)) %>%
   gather(key = "para", value = "value") %>%
-  mutate(para = factor(para, levels = paraNames, labels = paraLabels ))%>%
-  ggplot(aes(value)) + geom_histogram(bins = 12) +
-  facet_grid( ~ para, scales = "free", labeller = label_parsed) + 
+  mutate(para = factor(para, levels = paraNames, labels = paraNames))
+
+plotData$para = recode(plotData$para, alphaR = 'alpha[r]', alphaU = 'alpha[u]', prior = 'eta')
+plotData %>% ggplot(aes(value)) + geom_histogram(bins = 8) +
+  facet_grid(~ para, scales = "free", labeller = label_parsed) + 
   myTheme + xlab(" ") + ylab(" ")
 fileName = sprintf("%s/%s/hist.pdf", "figures/expParaAnalysis", modelName)
 ggsave(fileName, width = 8, height = 4)
+
+# correlation
+plotData = expPara %>% select(c("alphaR", "alphaU", "tau", "gamma", "prior")) %>% filter(passCheck) 
+corMx = cor(plotData, method = "spearman")
+library("corrplot")
+corrplot(corMx, method="number", type="upper")
+fileName = sprintf("%s/%s/corr.pdf", "figures/expParaAnalysis", modelName)
+ggsave(fileName, p, width = 6, height = 6)
+
+
 
 # optimism bias
 logOdds = log(expPara$alphaR / expPara$alphaU)

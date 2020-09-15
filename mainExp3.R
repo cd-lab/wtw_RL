@@ -1,4 +1,4 @@
-# this is the analysis script for Exp2
+# this is the analysis script for Exp3
 
 # change the working directory
 setwd("wtw_vary")
@@ -14,7 +14,6 @@ expSchematics(smallReward , iti, isPlot = T)
 
 ###################### model-free analysis ########################
 source("MFPlot.R")
-MFPlot()
 
 ##################### model fit #############################
 ## warnings: this function is time-consuming and we don't recommend running it locally

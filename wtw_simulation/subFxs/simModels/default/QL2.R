@@ -46,6 +46,7 @@ QL2 = function(paras, condition, duration, normResults){
   Qwaits = -0.1 * (tWaits) + prior + V0 # value of waiting at each decision points
   
   # initialize output variables
+  Gs_ = matrix(0, length(tWaits), nTrialMax)
   Qwaits_ = matrix(NA, length(tWaits), nTrialMax); Qwaits_[,1] = Qwaits 
   V0_ = vector(length = nTrialMax); V0_[1] = V0
   scheduledWait_ =  rep(0, nTrialMax)
@@ -85,7 +86,7 @@ QL2 = function(paras, condition, duration, normResults){
           T =  ifelse(getToken, scheduledWait + iti, t) # when the trial ends
           timeWaited =  T - iti # how long the agent waits since the token appears
           trialEarnings = ifelse(getToken, tokenValue, smallReward) 
-          sellTime = elapsedTime + timeWaited # elapsed task time when the agent sells the token
+          sellTime = elapsedTime + timeWaited # elapsed task time when the agent sells the token # probably a bug here??
           elapsedTime = elapsedTime + T  # elapsed task time before the next token appears
           # record trial-wise variables
           trialEarnings_[tIdx] = trialEarnings
@@ -108,8 +109,10 @@ QL2 = function(paras, condition, duration, normResults){
     
     # calculate expected returns for t >= 2
     Gts =  gamma ^ (T - tWaits) * (trialEarnings + V0)
+ 
     # only update value functions before time t = T
     updateFilter = tWaits <= T 
+    Gs_[updateFilter,tIdx] = Gts[updateFilter]
     # update Qwaits
     Qwaits[updateFilter] = Qwaits[updateFilter] + alpha * (Gts[updateFilter] - Qwaits[updateFilter])
     
@@ -135,6 +138,7 @@ QL2 = function(paras, condition, duration, normResults){
     "sellTime" = sellTime_[1 : nTrial],
     "scheduledWait" = scheduledWait_[1 : nTrial],
     "Qwaits_" = Qwaits_[, 1 : nTrial], 
+    "Gs_" = Gs_[, 1 : nTrial], 
     "V0_" = V0_[1 : nTrial]
   )
   return(outputs)

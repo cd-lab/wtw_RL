@@ -124,15 +124,16 @@ if(isPlot){
   ggsave('figures/expSchematics/CDF.png', width =4, height = 3)
   
   # plot reward rates
-  data.frame(rate = c(0, HPRate, 0, LPRate), 
-             time = c(0, time$HP, 0, time$LP),
+  data.frame(rate = c(NA, HPRate, NA, LPRate), 
+             time = c(0, time$HP + iti, 0, time$LP + iti),
              condition = rep(c('HP', 'LP'), each = length(time$HP) + 1)) %>%
     ggplot(aes(time, rate)) + geom_line(size = 2, aes(color = condition)) + facet_grid(~cond) +
     myTheme + 
-    ylab(TeX('Reward rate (¢ $s^{-1}$)')) + xlab("Waiting policy (s)") + 
+    ylab(TeX("Reward rate $\\rho_T$ (¢ $s^{-1}$)")) + xlab("Give-up time (s)") + 
     theme(plot.title = element_text(hjust = 0.5, color = themeColor)) +
-    scale_x_continuous(breaks = c(0, max(delayMaxs)/ 2, max(delayMaxs)),
-                       limits = c(0, max(delayMaxs) * 1.1)) +
+    scale_x_continuous(breaks = c(0, iti, max(delayMaxs + iti)),
+                       limits = c(0, max(delayMaxs) * 1.1),
+                       labels = c("0", "", max(delayMaxs + iti))) +
     scale_color_manual(values = conditionColors) +
     theme(legend.position = "none") + facet_grid(~condition)
   ggsave("figures/expSchematics/reward_rate.eps", width = 4, height = 3)

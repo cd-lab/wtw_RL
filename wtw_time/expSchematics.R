@@ -1,5 +1,6 @@
 # this script plots delay distributions and reward rates in two environments
 expSchematics = function(smallReward, iti, isPlot){
+library("latex2exp")
 # small reward 
 smallReward = 0 # get 0 when the agent quits
 
@@ -33,16 +34,18 @@ rewardDelayCDFs = list('HP' = cumsum(rewardDelayPDFs$HP),
 
 # average waiting durations given different policies
 ## Here we assume rewards occur at the middle of each time bin
-HP = cumsum((time[['HP']] - 0.5 * bin) * rewardDelayPDFs$HP) / cumsum(rewardDelayPDFs$HP)
-LP = cumsum((time[['LP']] - 0.5 * bin) * rewardDelayPDFs$LP) / cumsum(rewardDelayPDFs$LP)
+HP = cumsum((time[['HP']]) * rewardDelayPDFs$HP) / cumsum(rewardDelayPDFs$HP)
+LP = cumsum((time[['LP']]) * rewardDelayPDFs$LP) / cumsum(rewardDelayPDFs$LP)
 meanRewardDelays = list('HP' = HP, 'LP' = LP)
 
 # rewardRates given different policies
 HP = tokenValue * rewardDelayCDFs$HP /
   ((meanRewardDelays$HP * rewardDelayCDFs$HP + time[['HP']] * (1 - rewardDelayCDFs$HP)) + iti)
+HP[is.nan(HP)] = 0
 LP = tokenValue * rewardDelayCDFs$LP /
   ((meanRewardDelays$LP * rewardDelayCDFs$LP + time[['LP']] * (1 - rewardDelayCDFs$LP)) + iti)
 rewardRates = list('HP' = HP, 'LP' = LP)
+
 
 # optimal raward rates and optimal policies
 optimWaitThresholds = list()
@@ -120,13 +123,15 @@ if(isPlot){
   
   # plot reward rates
   optimData = data.frame(condition = c("HP", "LP"), waitThreshold = as.double(optimWaitThresholds))
-  data.frame(rewardRate = c(0, rewardRates[[1]], 0, rewardRates[[2]]),
-             time = c(0, time[[1]], 0, time[[2]]),
+  
+  data.frame(rewardRate = c(NA, rewardRates[[1]], NA, rewardRates[[2]]),
+             time = c(0, time[[1]] + iti,  0, time[[2]] + iti),
              condition = rep(c("HP", "LP"), c(length(time$HP) + 1, length(time$LP) + 1))) %>%
     ggplot(aes(time, rewardRate)) +
     geom_line(size = 2, aes(color = condition))  + myTheme + 
-    scale_x_continuous(breaks = c(0, max(delayMaxs)/ 2, max(delayMaxs)),limits = c(0, max(delayMaxs) * 1.1)) + 
-    ylab(expression(bold("Reward rate (¢ s"^"-1"*")"))) + xlab("Waiting policy (s)")  +
+    scale_x_continuous(breaks = c(0, 2, 36),limits = c(0, max(delayMaxs) * 1.2),
+                       labels = c("0", "", "36")) +
+    ylab(TeX("Reward rate $\\rho_T$ (¢ $s^{-1}$)")) + xlab("Give-up time (s)")  +
     scale_y_continuous(breaks = c(0, 0.4, 0.8, 1.2), limits = c(0, 1.3)) +
     theme(plot.title = element_text(hjust = 0.5, color = themeColor)) +
     scale_color_manual(values = conditionColors) +

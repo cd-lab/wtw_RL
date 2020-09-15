@@ -44,7 +44,7 @@ data.frame(wtw = unlist(timeWTW_),
             fill = "#d9d9d9", inherit.aes = F) +
   geom_ribbon(aes(ymin=min, ymax=max), fill = 'grey') +
   geom_line(size = 0.5) +
-  xlab("Task time (s)") + ylab("WTW (s)") + 
+  xlab("Task time (min)") + ylab("WTW (s)") + 
   scale_y_continuous(breaks = c(0, 10, 20), limits = c(0, 20)) +
   myTheme + scale_x_continuous(breaks = c(0, 600, 1200), labels = c(0, 600, 1200) / 60 ) +
   theme(plot.title = element_text(face = "bold", hjust = 0.5, color = themeColor)) +
@@ -138,8 +138,7 @@ sigData = data.frame(
 # plot
 plotData %>%
   group_by(condition, time) %>%
-  dplyr::(mu = mean(survCurve, na.rm = F), se = sd(survCurve, na.rm = F) / sqrt(sum(!is.na(survCurve))),
-                   min = mu- se, max = mu + se) %>%
+  dplyr::summarise(mu = mean(survCurve, na.rm = F), se = sd(survCurve, na.rm = F) / sqrt(sum(!is.na(survCurve))),min = mu- se, max = mu + se) %>%
   ggplot(aes(time, mu, color = condition, fill = condition)) + geom_line() +
   geom_ribbon(aes(time, ymin = min, ymax = max), alpha = 0.5, color = NA) +
   geom_line(data = optim, aes(t, surv, color = condition, linetype = condition, alpha = condition), size = 1.2) +

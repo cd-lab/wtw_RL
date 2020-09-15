@@ -1,0 +1,11 @@
+
+QL1 simpleWarning in validityMethod(object): The following variables have undefined values:  group_gamma,The following variables have undefined values:  group_prior. Many subsequent functions will not work correctly.
+
+QL1 simpleWarning: The largest R-hat is 4.57, indicating chains have not mixed.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#r-hat
+
+QL1 simpleWarning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#bulk-ess
+
