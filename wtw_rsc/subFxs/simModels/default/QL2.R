@@ -54,7 +54,7 @@ QL2 = function(paras, condition, duration, normResults){
   sellTime_ = rep(0, nTrialMax)
   
   # track elpased time from the beginning of the task 
-  elapsedTime = -iti # the first trial doesn't have a pre-trial ITI 
+  elapsedTime = 0 
   
   # loop over trials
   tIdx = 1

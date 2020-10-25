@@ -23,18 +23,15 @@ transformed data {
 parameters {
   // parameters:
   // tau: action consistency 
-  // theta : decision bias
   
   // for computational efficiency,we sample raw parameters from unif(-0.5, 0.5)
   // which are later transformed into actual parameters
   real<lower = -0.5, upper = 0.5> raw_tau;
-  real<lower = -0.5, upper = 0.5> raw_theta;
 
 }
 transformed parameters{
   // transfer paras
   real tau = (raw_tau + 0.5) * 21.9 + 0.1 ; // tau ~ unif(0.1, 22)
-  real theta = (raw_theta + 0.5) * 40 - 20; // tau ~ unif(-20, 20)
 }
 model {
   // delcare variables 
@@ -46,7 +43,6 @@ model {
   
   // sample
   raw_tau ~ uniform(-0.5, 0.5);
-  raw_theta ~ uniform(-0.5, 0.5);
   
   // loop over trials
   for(tIdx in 1 : N){
@@ -71,7 +67,7 @@ model {
         action = 1; // wait
       }
       // calculate the likelihood 
-      actionValues[1] = values[i] * tau + theta;
+      actionValues[1] = values[i] * tau;
       target +=  categorical_logit_lpmf(action | actionValues);
     } 
   }
@@ -107,7 +103,7 @@ generated quantities {
         action = 1; // wait
       }
       // calculate the likelihood 
-      actionValues[1] = values[i] * tau + theta;
+      actionValues[1] = values[i] * tau;
       log_lik[no] = categorical_logit_lpmf(action | actionValues);
       no = no + 1;
     }

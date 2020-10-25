@@ -2,8 +2,8 @@ data {
   // experiment parameters
   real stepSec;// duration between two decision points
   real iti;// iti duration
-  int  nDecPoint; // number of possible decision points
-  real tWaits[nDecPoint]; // time for each decision point 
+  int  nWaitOrQuit; // number of possible decision points
+  real tWaits[nWaitOrQuit]; // time for each decision point 
   
   // initial value for V0
   real V0_ini; 
@@ -12,11 +12,11 @@ data {
   int N; // number of trials
   int Rs[N]; // payoff in each trial
   real Ts[N]; // a trial ends at t == T
-  int lastDecPoints[N];// at which decision point each trial ends
+  int nMadeActions[N];// at which decision point each trial ends
 }
 transformed data {
   // total number of decision points in all trials
-  int nDecPointTotal = sum(lastDecPoints);
+  int nTotalAction = sum(nMadeActions);
 }
 parameters {
   // parameters:
@@ -43,9 +43,9 @@ transformed parameters{
   // // state value of t = 0
   real V0; 
   // // action value of waiting in each decision points 
-  vector[nDecPoint] Qwaits; 
+  vector[nWaitOrQuit] Qwaits; 
   // // variables to record action values 
-  matrix[nDecPoint, N] Qwaits_ = rep_matrix(0, nDecPoint, N);
+  matrix[nWaitOrQuit, N] Qwaits_ = rep_matrix(0, nWaitOrQuit, N);
   vector[N] V0_ = rep_vector(0, N);
   // // expected return 
   real G0;
@@ -55,7 +55,7 @@ transformed parameters{
   V0 = V0_ini; 
   // the initial waiting value delines with elapsed time 
   // and the prior parameter determines at which step it falls below V0
-  for(i in 1 : nDecPoint){
+  for(i in 1 : nWaitOrQuit){
     Qwaits[i] = - i * 0.1 + prior + V0;
   }
   
@@ -67,10 +67,10 @@ transformed parameters{
   for(tIdx in 1 : (N - 1)){
     real T = Ts[tIdx]; // this trial ends on t = T
     int R = Rs[tIdx]; // payoff in this trial
-    int lastDecPoint = lastDecPoints[tIdx]; // last decision point in this trial
+    int nMadeAction = nMadeActions[tIdx]; // last decision point in this trial
     
     // update Qwaits towards the discounted returns
-    for(i in 1 : lastDecPoint){
+    for(i in 1 : nMadeAction){
       real t = tWaits[i]; // time for this decision points 
       real Gt = gamma ^ (T - t) * (R + V0);
       Qwaits[i] = Qwaits[i] + alpha * (Gt - Qwaits[i]);
@@ -99,13 +99,13 @@ model {
   for(tIdx in 1 : N){
     real T = Ts[tIdx]; // this trial ends on t = T
     int R = Rs[tIdx]; // payoff in this trial
-    int lastDecPoint = lastDecPoints[tIdx]; // last decision point in this trial
+    int nMadeAction = nMadeActions[tIdx]; // last decision point in this trial
     
     // loop over decision points
-    for(i in 1 : lastDecPoint){
+    for(i in 1 : nMadeAction){
       // the agent wait in every decision point in rewarded trials
       // and wait except for the last decision point in non-rewarded trials
-      if(R == 0 && i == lastDecPoint){
+      if(R == 0 && i == nMadeAction){
         action = 2; // quit
       }else{
         action = 1; // wait
@@ -121,7 +121,7 @@ generated quantities {
  // initialize variables
   vector[2] actionValues;
   int action;
-  vector[nDecPointTotal] log_lik = rep_vector(0, nDecPointTotal); // trial-wise log likelihood 
+  vector[nTotalAction] log_lik = rep_vector(0, nTotalAction); // trial-wise log likelihood 
   real totalLL; // total log likelihood
   int no = 1; // action index
   
@@ -129,11 +129,11 @@ generated quantities {
   for(tIdx in 1 : N){
     real T = Ts[tIdx]; // this trial ends on t = T
     int R = Rs[tIdx]; // payoff in this trial
-    int lastDecPoint = lastDecPoints[tIdx]; // last decision point in this trial
+    int nMadeAction = nMadeActions[tIdx]; // last decision point in this trial
     
     // loop over decision points
-    for(i in 1 : lastDecPoint){
-      if(R == 0 && i == lastDecPoint){
+    for(i in 1 : nMadeAction){
+      if(R == 0 && i == nMadeAction){
         action = 2; // quit
       }else{
         action = 1; // wait

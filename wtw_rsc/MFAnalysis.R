@@ -13,14 +13,14 @@
   # totalEarnings :  [nSubx1 num] 
 # }
 
-blockStats = {
+# blockStats = {
   # id : [nSubx3 id]
   # condition : [nSubx3 fac]
   # nExcl : [nSubx3  int] # total number of excluded trials 
   # muWTW : [nSubx3  num] # average willingness to wait (WTW), measured by area under the Kaplan-Meier survival curve
   # stdWTW : [nSubx3 num] # standard deviation of WTW, measured in Kaplan-Meier survival analysis
   # totalEarnings :  [nSubx3 num] 
-}
+# }
 
 # timeWTW_ : list(nSubx1) # wtw timecourse, each element is a vector
 # trialWTW_ : list(nSubx1) # trial-wise WTW, each element is a vector
@@ -65,6 +65,7 @@ MFAnalysis = function(isTrct){
     # load (and truncate) trialData for this individual
     id = ids[sIdx]
     thisTrialData = trialData[[id]]
+    trialPlots(thisTrialData)
     if(isTrct){
       trctLine = blockSec - max(delayMaxs)
       # truncate trials completed after tractline in each block

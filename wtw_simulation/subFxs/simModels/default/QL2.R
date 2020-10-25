@@ -55,7 +55,7 @@ QL2 = function(paras, condition, duration, normResults){
   sellTime_ = rep(0, nTrialMax)
   
   # track elpased time from the beginning of the task 
-  elapsedTime = -iti # the first trial doesn't have a pre-trial ITI 
+  elapsedTime = -iti
   
   # loop over trials
   tIdx = 1
@@ -68,6 +68,7 @@ QL2 = function(paras, condition, duration, normResults){
     t = 0
     while(t <= tMax){
       # take actions after the iti
+      # for time interval [t, t + 1)
       if(t >= iti){
         # decide whether to wait or quit
         pWait =  1 / sum(1  + exp((V0 + smallReward - Qwaits[tWaits == t])* tau))
@@ -83,11 +84,10 @@ QL2 = function(paras, condition, duration, normResults){
         isTerminal = (getToken || action == "quit")
         if(isTerminal){
           # update trial-wise variables 
-          T =  ifelse(getToken, scheduledWait + iti, t) # when the trial ends
+          T =  ifelse(getToken, scheduledWait + iti, t) # if quit, time ends at t
           timeWaited =  T - iti # how long the agent waits since the token appears
           trialEarnings = ifelse(getToken, tokenValue, smallReward) 
-          sellTime = elapsedTime + timeWaited # elapsed task time when the agent sells the token # probably a bug here??
-          elapsedTime = elapsedTime + T  # elapsed task time before the next token appears
+          sellTime = elapsedTime # elapsed task time when the agent sells the token
           # record trial-wise variables
           trialEarnings_[tIdx] = trialEarnings
           timeWaited_[tIdx] = timeWaited
@@ -95,6 +95,8 @@ QL2 = function(paras, condition, duration, normResults){
           break
         }
       }
+      # update time
+      elapsedTime = elapsedTime + stepSec
       t = t + stepSec
     }
     

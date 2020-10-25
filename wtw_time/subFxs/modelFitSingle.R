@@ -39,11 +39,12 @@ modelFitSingle = function(id, thisTrialData, modelName, paraNames, model, config
     ## number of possible decision points in a trial
     delayMax = max(delayMaxs)
     tWaits = seq(iti, delayMax + iti, by = stepSec)
-    nDecPoint = length(tWaits)
     ## ensure timeWaited = scheduledWait on rewarded trials
     thisTrialData = within(thisTrialData, {timeWaited[trialEarnings!= 0] = scheduledWait[trialEarnings!= 0]})
-    ## last decision point before a trial ends
-    lastDecPoints = floor(thisTrialData$timeWaited / stepSec) + 1
+    ## number of wait-or-quit decision time points in a trial
+    nWaitOrQuit = length(tWaits) 
+    ## number of made actions in each trial 
+    nMadeActions = floor(thisTrialData$timeWaited / stepSec) + 1
     ## when a trial ends 
     Ts = thisTrialData$timeWaited + iti
     Ts[thisTrialData$trialEarnings == 0] = floor(Ts[thisTrialData$trialEarnings == 0] / stepSec) * stepSec 
@@ -51,19 +52,19 @@ modelFitSingle = function(id, thisTrialData, modelName, paraNames, model, config
     cIdxs = ifelse(thisTrialData$condition == "HP", 1, 2)
     ## the theoretic present value of the awaited reward sampled at 1 hz
     HPtheoreticValues = c(subjectValue$HP[seq(0, delayMaxs[1], by = 0.1) %in% seq(0, delayMax, by = stepSec)],
-                          rep(0, (nDecPoint -delayMaxs[1]) / stepSec - 1))
+                          rep(0, (nWaitOrQuit -delayMaxs[1]) / stepSec - 1))
     LPtheoreticValues = subjectValue$LP[seq(0, delayMaxs[2], by = 0.1) %in% seq(0, delayMax, by = stepSec)]
     
     ## orgianze inputs into a list
     inputs <- list(
       iti = iti,
       stepSec = stepSec,
-      nDecPoint = nDecPoint,
+      nWaitOrQuit = nWaitOrQuit,
       tWaits = tWaits,
       N = length(thisTrialData$trialEarnings), # number of trials
       Rs = thisTrialData$trialEarnings, # rewards on each trial
       Ts = Ts,
-      lastDecPoints = lastDecPoints,
+      nMadeActions = nMadeActions,
       HPvalues = HPtheoreticValues,
       LPvalues = LPtheoreticValues,
       cIdxs = cIdxs

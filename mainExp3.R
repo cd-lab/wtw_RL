@@ -6,7 +6,7 @@ setwd("wtw_vary")
 # parameters
 iti = 2 # inter-trial interval in seconds 
 smallReward = 0 # initial token value
-modelNames = c("QL1", "QL2", "RL1", "RL2", "optim_noise", "optim_noise_bias")
+modelNames = c("QL1", "QL2", "RL1", "RL2", "BL", "optim_noise")
 
 ####################### normative analysis ######################
 source("expSchematics.R")

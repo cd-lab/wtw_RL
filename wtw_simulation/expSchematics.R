@@ -14,6 +14,7 @@ expSchematics = function(smallReward, iti, isPlot){
   # for display purposes, all variables on the continous time scale
   # are discretized into 0.1 second time bins
   bin = 0.1 # width of a time bin
+  smallReward = 0
   time = list(
     HP = seq(bin, delayMaxs[1], by = bin),
     LP = seq(bin, delayMaxs[2], by = bin)

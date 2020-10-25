@@ -31,9 +31,9 @@ expModelRepAll = function(){
   stdWTWEmp = sumStats$stdWTW
   
   # modelNames
-  models = c("optim_noise", "optim_noise_bias", 
+  models = c("BL", "optim_noise", 
              "QL1", "QL2", "RL1", "RL2")
-  modelLabels =  c("optim_noise", "optim_noise_bias", 
+  modelLabels =  c("BL", "optim_noise",
                    "Q1", "Q2", "R1", "R2")
   nModel = length(models)
   
@@ -63,6 +63,8 @@ expModelRepAll = function(){
   }
   allPass = apply(passCheck_, 1, sum) == nModel
   sum(allPass)
+  
+  
   ######################### predict AUC #######################
   plotData = bind_rows(outputs) %>%
     mutate(model = rep(modelLabels, each = nSub * nBlock),
@@ -71,11 +73,11 @@ expModelRepAll = function(){
            condition = rep(sumStats$condition, nModel)) %>% 
     filter(rep(allPass, nModel * nBlock)) %>%
     arrange(model, condition, empAUC)  %>%
-    mutate(rank = rep(c(1 : sum(sumStats$condition == "HP" & allPass), 1 : sum(sumStats$condition == "LP" & allPass)), nModel),
-           type = ifelse(model %in% c("optim_noise", "optim_noise_bias"),
-                         "baseline", "RL")) 
-  # main text version
-  plotData %>% filter(model %in% c("optim_noise", "optim_noise_bias", "Q2")) %>%
+    mutate(rank = rep(c(1 : sum(sumStats$condition == "HP" & allPass), 1 : sum(sumStats$condition == "LP" & allPass)), nModel)) 
+  
+  ######################### predict AUC #######################
+  # full version
+  plotData %>%
     ggplot(aes(rank, muAUC)) +
     geom_bar(data = plotData[plotData$model == "Q1",],
              aes(rank, empAUC), inherit.aes = F, stat = "identity",
@@ -87,31 +89,18 @@ expModelRepAll = function(){
     facet_grid(~condition) +
     scale_x_continuous(breaks = c()) +
     xlab('') +
-    scale_color_manual(values = c("#1f78b4", "#33a02c", "#e7298a")) +
-    theme(legend.title = element_blank())
-  fileName = "figures/expModelRep/AUC_all.eps"
-  ggsave(filename = fileName,  width = 6, height = 3)
-  fileName = "figures/expModelRep/AUC_all.png"
-  ggsave(filename = fileName,  width = 6, height = 3)
-  
-  # full version
-  plotData %>%
-    ggplot(aes(rank, muAUC)) +
-    geom_bar(data = plotData[plotData$model == "Q1",],
-             aes(rank, empAUC), inherit.aes = F, stat = "identity",
-             fill = NA, color = "grey") +
-    geom_line(aes(color = model, linetype = type)) + 
-    geom_point(aes(color = model, shape = type)) + 
-    myTheme + 
-    ylab("AUC (s)") + xlab("") +
-    facet_grid(~condition) +
-    scale_x_continuous(breaks = c()) +
-    xlab('') +
-    scale_color_manual(values = c("#1f78b4", "#33a02c",
-                                  "#e7298a", "#e41a1c", "#d95f02", "#984ea3")) +
+    scale_color_manual(values = c(
+      "#fb9a99",
+      "#e31a1c",
+      "#b2df8a",
+      "#33a02c",
+      "#a6cee3",
+      "#1f78b4"
+    )) +
     scale_linetype_manual(values = c(2, 1)) +
     scale_shape_manual(values = c(NA, 16)) + 
-    theme(legend.title = element_blank())
+    theme(legend.title = element_blank(),
+          legend.position = "none")
   fileName = "figures/expModelRep/AUC_all_full.eps"
   ggsave(filename = fileName,  width = 6, height = 3)
   fileName = "figures/expModelRep/AUC_all_full.png"
@@ -126,26 +115,34 @@ expModelRepAll = function(){
     filter(rep(allPass, nModel * nBlock)) %>%
     arrange(model, condition, empCIP)  %>%
     mutate(rank = rep(c(1 : sum(sumStats$condition == "HP" & allPass), 1 : sum(sumStats$condition == "LP" & allPass)), nModel),
-           type = ifelse(model %in% c("optim_noise", "optim_noise_bias"),
+           type = ifelse(model %in% c("ON", "BL"),
                          "baseline", "RL")) 
+  
   # full version
   plotData %>%
     ggplot(aes(rank, muCIP)) +
     geom_bar(data = plotData[plotData$model == "Q1",],
              aes(rank, empCIP), inherit.aes = F, stat = "identity",
              fill = NA, color = "grey") +
-    geom_line(aes(color = model, linetype = type)) + 
-    geom_point(aes(color = model, shape = type)) + 
+    geom_line(aes(color = model)) + 
+    geom_point(aes(color = model)) + 
     myTheme + 
     ylab(TeX("CIP ($s^2$)")) + xlab("") +
     facet_grid(~condition) +
     scale_x_continuous(breaks = c()) +
     xlab('') +
-    scale_color_manual(values = c("#1f78b4", "#33a02c",
-                                  "#e7298a", "#e41a1c", "#d95f02", "#984ea3")) +
+    scale_color_manual(values = c(
+      "#fb9a99",
+      "#e31a1c",
+      "#b2df8a",
+      "#33a02c",
+      "#a6cee3",
+      "#1f78b4"
+    )) +
     scale_linetype_manual(values = c(2, 1)) +
     scale_shape_manual(values = c(NA, 16)) + 
-    theme(legend.title = element_blank())
+    theme(legend.title = element_blank(),
+          legend.position = "none")
   fileName = "figures/expModelRep/CIP_all_full.eps"
   ggsave(filename = fileName,  width = 6, height = 3)
   fileName = "figures/expModelRep/CIP_all_full.png"

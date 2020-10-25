@@ -47,8 +47,8 @@ simExample = function(){
   LPauc_ = matrix(NA, nrow =  5, ncol = nRep)
   for(i in 1 : nRep){
     # HP 
-    # tempt = simModel(c(0.05, 0.05, 5, 0.85, 6), "HP", duration, normResults)
-    tempt = simModel(c(0.1, 0.1, 2, 0.85, 3), "HP", duration, normResults)
+    tempt = simModel(c(0.05, 0.05, 5, 0.85, 6), "HP", duration, normResults)
+    # tempt = simModel(c(0.1, 0.1, 2, 0.85, 3), "HP", duration, normResults)
     HPSim_[[i]] = tempt
     tempt$Qwaits_ = NULL
     tempt$Gs_ = NULL
@@ -57,8 +57,8 @@ simExample = function(){
     HPauc_[5,i] = kmsc(tempt[116 * 60 <= tempt$sellTime,], min(delayMaxs), F, kmGrid)$auc
     
     # LP
-    # tempt  = simModel(c(0.05, 0.05, 5, 0.85, 6), "LP", duration, normResults)
-    tempt  = simModel(c(0.05, 0.05, 2, 0.85, 3), "LP", duration, normResults)
+    tempt  = simModel(c(0.05, 0.05, 5, 0.85, 6), "LP", duration, normResults)
+    # tempt  = simModel(c(0.05, 0.05, 2, 0.85, 3), "LP", duration, normResults)
     LPSim_[[i]] = tempt
     tempt$Qwaits_ = NULL;
     tempt$Gs_ = NULL
@@ -156,22 +156,24 @@ simExample = function(){
     
   }
   
-  # Qwaits in HP and LP
+  # relative value of waiting in HP and LP
   nCut = 5 # five obervations
   nHPSteps = nrow(HPSim_[[1]]$Qwaits_) - 1
-  HPQwaits_ = matrix(NA, nrow = nHPSteps, ncol = nRep * nCut)
+  HPRvWaits_ = matrix(NA, nrow = nHPSteps, ncol = nRep * nCut)
   for(i in 1 : nRep){
     junk = sapply(c(240, 480, 720), function(x) which.min(abs(HPSim_[[i]]$sellTime - x)))
-    HPQwaits_[, (i-1) * nCut + 1 : nCut] = HPSim_[[i]]$Qwaits_[1 :nHPSteps ,c(1, junk,length(HPSim_[[i]]$sellTime))]
+    HPRvWaits_[, (i-1) * nCut + 1 : nCut] = HPSim_[[i]]$Qwaits_[1 :nHPSteps ,c(1, junk,length(HPSim_[[i]]$sellTime))] -
+      matrix(rep(HPSim_[[i]]$V0_[c(1, junk,length(HPSim_[[i]]$sellTime))], each = nHPSteps), ncol = nCut)
   }
   nLPSteps = nrow(LPSim_[[1]]$Qwaits_) - 1
-  LPQwaits_ = matrix(NA, nrow = nLPSteps, ncol = nRep * nCut)
+  LPRvWaits_ = matrix(NA, nrow = nLPSteps, ncol = nRep * nCut)
   for(i in 1 : nRep){
     junk = sapply(c(240, 480, 720), function(x) which.min(abs(LPSim_[[i]]$sellTime - x)))
-    LPQwaits_[, (i-1) * nCut + 1 : nCut] = LPSim_[[i]]$Qwaits_[1 : nLPSteps,c(1, junk,length(LPSim_[[i]]$sellTime))]
+    LPRvWaits_[, (i-1) * nCut + 1 : nCut] = LPSim_[[i]]$Qwaits_[1 : nLPSteps,c(1, junk,length(LPSim_[[i]]$sellTime))] -
+      matrix(rep(LPSim_[[i]]$V0_[c(1, junk,length(LPSim_[[i]]$sellTime))], each = nLPSteps), ncol = nCut)
   }
   HPdata = data.frame(
-    Qwait = as.vector(HPQwaits_),
+    rvWait = as.vector(HPRvWaits_),
     id = rep(1 : nRep, each = nCut * nHPSteps),
     period = rep(rep(1 : nCut, nRep), each = nHPSteps),
     t = rep(1:nHPSteps, nRep * nCut),
@@ -179,7 +181,7 @@ simExample = function(){
     condition = "HP"
   ) 
   LPdata =  data.frame(
-    Qwait = as.vector(LPQwaits_),
+    rvWait = as.vector(LPRvWaits_),
     id = rep(1 : nRep, each = nCut * nLPSteps),
     period = rep(rep(1 : nCut, nRep), each = nLPSteps),
     t = rep(1:nLPSteps, nRep * nCut),
@@ -187,20 +189,21 @@ simExample = function(){
     condition = "LP"
   ) 
   # asymptotic Q(wait, t)
-  asyQwaitHP = HPdata %>% filter(period == 5) %>% group_by(t, condition) %>% summarise(mean(Qwait))
-  asyQwaitLP = LPdata %>% filter(period == 5) %>% group_by(t, condition) %>% summarise(mean(Qwait))
-  asyDf = rbind(asyQwaitHP, asyQwaitLP)
+  asyRvWaitHP = HPdata %>% filter(period == 5) %>% group_by(t, condition) %>% summarise(mean(rvWait))
+  asyRvWaitLP = LPdata %>% filter(period == 5) %>% group_by(t, condition) %>% summarise(mean(rvWait))
+  asyDf = rbind(asyRvWaitHP, asyRvWaitLP)
+  names(asyDf) = c("t", "condition", "rvWait")
   # plot Qwaits 
   plotData = rbind(HPdata, LPdata)
   plotData %>% filter(period < 5) %>% group_by(period, t, condition) %>%
-    summarise(mu = mean(Qwait), color = mean(color)) %>%
+    summarise(mu = mean(rvWait), color = mean(color)) %>%
     ggplot(aes(t, mu, color = as.factor(color))) + geom_point() + 
     geom_line() + myTheme +
-    facet_grid(~condition) + xlab("t (s)") + ylab("Q(wait, t)") +
+    facet_grid(~condition) + xlab("t (s)") + ylab("Relative value of waiting") +
     scale_color_manual(values = c("#c7e9c0", "#41ab5d", "#006d2c", "#00441b",
                                   "#bcbddc", "#807dba", "#6a51a3", "#3f007d")) +
     theme(legend.position = "none") + 
-    geom_point(data = asyDf, aes(x = t, y = `mean(Qwait)`), inherit.aes = F) 
+    geom_point(data = asyDf, aes(x = t, y = rvWait), inherit.aes = F) 
   ggsave("figures/simulation/example/Qwait.png", width = 4, height = 3) 
 }
 
