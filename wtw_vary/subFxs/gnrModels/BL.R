@@ -35,7 +35,7 @@ BL = function(paras, condition_, scheduledWait_, scheduledReward_, normResults){
   sellTime_ = rep(0, nTrial)
   
   # track elpased time from the beginning of the task 
-  elapsedTime = 0 # the first trial doesn't have a pre-trial ITI 
+  elapsedTime = -iti # the first trial doesn't have a pre-trial ITI 
   
   # loop over trials
   for(tIdx in 1 : nTrial) {
@@ -64,8 +64,7 @@ BL = function(paras, condition_, scheduledWait_, scheduledReward_, normResults){
           T =  ifelse(getToken, scheduledWait + iti, t) # when the trial ends
           timeWaited =  T - iti # how long the agent waits since the token appears
           trialEarnings = ifelse(getToken, scheduledReward, 0) 
-          sellTime = elapsedTime + timeWaited # elapsed task time when the agent sells the token
-          elapsedTime = elapsedTime + T  # elapsed task time before the next token appears
+          sellTime = elapsedTime 
           # record trial-wise variables
           trialEarnings_[tIdx] = trialEarnings
           timeWaited_[tIdx] = timeWaited
@@ -74,6 +73,7 @@ BL = function(paras, condition_, scheduledWait_, scheduledReward_, normResults){
         }
       }
       t = t + stepSec
+      elapsedTime = elapsedTime + stepSec
     }
   }
   # return outputs

@@ -35,7 +35,7 @@ BL = function(paras, condition_, scheduledWait_, normResults){
   sellTime_ = rep(0, nTrial)
   
   # track elpased time from the beginning of the task 
-  elapsedTime = 0 # the first trial doesn't have a pre-trial ITI 
+  elapsedTime = -iti # the first trial doesn't have a pre-trial ITI 
   
   # loop over trials
   for(tIdx in 1 : nTrial) {
@@ -73,6 +73,7 @@ BL = function(paras, condition_, scheduledWait_, normResults){
         }
       }
       t = t + stepSec
+      elapsedTime = elapsedTime + stepSec
     }
   }
   # return outputs

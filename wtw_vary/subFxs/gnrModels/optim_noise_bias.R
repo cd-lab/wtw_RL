@@ -46,7 +46,7 @@ optim_noise_bias = function(paras, condition_, scheduledWait_, scheduledReward_,
   sellTime_ = rep(0, nTrial)
   
   # track elpased time from the beginning of the task 
-  elapsedTime = 0 # the first trial doesn't have a pre-trial ITI 
+  elapsedTime = -iti # the first trial doesn't have a pre-trial ITI 
   
   # loop over trials
   for(tIdx in 1 : nTrial) {
@@ -88,6 +88,7 @@ optim_noise_bias = function(paras, condition_, scheduledWait_, scheduledReward_,
         }
       }
       t = t + stepSec
+      elapsedTime = elapsedTime + stepSec
     }# end of the loop within a trial 
   } # end of the loop over trials
   

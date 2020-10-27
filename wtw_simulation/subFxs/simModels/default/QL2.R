@@ -19,8 +19,11 @@
 # Qwaits_ : [20/40 x nTrial num] value of waiting at each second in each trial
 # V0_ : [nTrialx1 num] value of entering a pre-trial iti, namely t = 0
 
-QL2 = function(paras, condition, duration, normResults){
+QL2 = function(paras, condition, duration, normResults, delays){
   source("subFxs/taskFxs.R")
+  
+  # check whether delays have been given 
+  exist = exists("delays")
   
   # default settings 
   iti = 2
@@ -49,10 +52,10 @@ QL2 = function(paras, condition, duration, normResults){
   Gs_ = matrix(0, length(tWaits), nTrialMax)
   Qwaits_ = matrix(NA, length(tWaits), nTrialMax); Qwaits_[,1] = Qwaits 
   V0_ = vector(length = nTrialMax); V0_[1] = V0
-  scheduledWait_ =  rep(0, nTrialMax)
-  trialEarnings_ = rep(0, nTrialMax)
-  timeWaited_ = rep(0, nTrialMax)
-  sellTime_ = rep(0, nTrialMax)
+  scheduledWait_ =  rep(NA, nTrialMax)
+  trialEarnings_ = rep(NA, nTrialMax)
+  timeWaited_ = rep(NA, nTrialMax)
+  sellTime_ = rep(NA, nTrialMax)
   
   # track elpased time from the beginning of the task 
   elapsedTime = -iti
@@ -60,8 +63,12 @@ QL2 = function(paras, condition, duration, normResults){
   # loop over trials
   tIdx = 1
   while(elapsedTime < duration) {
-    # current scheduledWait 
-    scheduledWait = drawSample(condition)
+    # current scheduledWait
+    if(exist){
+      scheduledWait = delays[tIdx]
+    }else{
+      scheduledWait = drawSample(condition)
+    }
     scheduledWait_[tIdx] = scheduledWait
     
     # sample at a temporal resolution of 1 sec until a trial ends
@@ -99,9 +106,8 @@ QL2 = function(paras, condition, duration, normResults){
       elapsedTime = elapsedTime + stepSec
       t = t + stepSec
     }
-    
+
     # when the trial endes, update value functions for all time points before T in the trial
-    
     # determine the learning rate depending on the payoff
     if(trialEarnings > 0){
       alpha = alphaR
@@ -111,7 +117,7 @@ QL2 = function(paras, condition, duration, normResults){
     
     # calculate expected returns for t >= 2
     Gts =  gamma ^ (T - tWaits) * (trialEarnings + V0)
- 
+    
     # only update value functions before time t = T
     updateFilter = tWaits <= T 
     Gs_[updateFilter,tIdx] = Gts[updateFilter]
@@ -125,13 +131,15 @@ QL2 = function(paras, condition, duration, normResults){
     # record updated values
     Qwaits_[,tIdx + 1] = Qwaits
     V0_[tIdx + 1] = V0
-
+    
     # proceed to the next trial
     tIdx = tIdx + 1
+
   } # end of the loop over trials
   
   # return outputs
-  nTrial = tIdx
+  nTrial = min(which(is.na(sellTime_))) - 1
+
   outputs = list( 
     "trialNum" = 1 : nTrial, 
     "condition" = rep(condition, nTrial),
