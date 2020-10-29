@@ -64,6 +64,7 @@ expSchematics = function(smallReward, iti, isPlot){
   
   # calculate subjective value as a function of elapsed time 
   subjectValues = list()
+  Tstars = list()
   for(cIdx in 1 : 2){
     condition = conditions[cIdx]
     delayMax = delayMaxs[cIdx]
@@ -75,7 +76,7 @@ expSchematics = function(smallReward, iti, isPlot){
     
     # initialize 
     thisSubjectValues = vector(length = length(ts))
-    Tstars = vector(length = length(ts))
+    thisTstars = vector(length = length(ts))
     # loop over different elapsed time
     for(i in 1 : length(ts)){
       t = ts[i] # this elapsed time
@@ -103,9 +104,10 @@ expSchematics = function(smallReward, iti, isPlot){
       }
       
       thisSubjectValues[i] = gt_max 
-      Tstars[i] = Tstar
+      thisTstars[i] = Tstar
     }
     subjectValues[[condition]] = thisSubjectValues
+    Tstars[[condition]] = thisTstars
   }
   
   if(isPlot){
