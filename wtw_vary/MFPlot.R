@@ -45,9 +45,10 @@ MFPlot = function(){
                         condition = rep(blockStats$condition, each = length(tGrid)),
                         blockIdx = rep(rep(1 : nBlock, length(tGrid)), nSub),
                         cbal = rep(cbal, each = length(tGrid))) %>%
-    group_by(time, cbal) %>% 
-    dplyr::summarise(mu = mean(wtw, na.rm = F), se = sd(wtw, na.rm = F) / sqrt(sum(!is.na(wtw))),min = mu- se, max = mu + se) 
-  plotData$mu[mod(plotData$time, blockSec) == 0] = NA
+    group_by(time, cbal, condition) %>% 
+    dplyr::summarise(mu = mean(wtw, na.rm = F), se = sd(wtw, na.rm = F) / sqrt(sum(!is.na(wtw))),
+                     min = mu- se, max = mu + se) %>% ungroup()
+  # plotData$mu[mod(plotData$time, blockSec) == 0] = NA
   plotData %>%
     ggplot(aes(time, mu)) +
     geom_rect(greenData, mapping = aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = 20),
@@ -64,14 +65,62 @@ MFPlot = function(){
     scale_x_continuous(breaks = seq(0, blockSec * nBlock, by = blockSec),
                        labels = seq(0, blockSec * nBlock, by = blockSec) / 60) +
     scale_y_continuous(breaks = c(0,  10, 20), limits = c(0, 20)) 
-  ggsave("figures/MFPlot/wtw_timecourse.eps", width = 5, height = 3)
+  ggsave("figures/MFPlot/wtw_timecourse.pdf", width = 5, height = 3)
   ggsave("figures/MFPlot/wtw_timecourse.png", width = 5, height = 3) 
   
+# another version
+## add NA values
+naData = data.frame(
+  time = rep((1 : (blockSec* nBlock))- 1, 2),
+  condition = rep(factor(c("LP", "HP", "LP", "HP", "HP", "LP", "HP", "LP")), each = blockSec),
+  cbal = rep(factor(c("HPLP", "LPHP")), each = blockSec * nBlock),
+  mu = rep(NA, blockSec * nBlock * 2),
+  se = rep(NA, blockSec * nBlock * 2),
+  min = rep(NA, blockSec * nBlock * 2),
+  max = rep(NA, blockSec * nBlock * 2)
+)
+newPlotData = rbind(naData, plotData)
+newPlotData %>%
+  ggplot(aes(time, mu, fill = condition, color = condition)) +
+  geom_rect(data = greyData, aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = 20), inherit.aes = F, fill = "#d9d9d9") +
+  geom_ribbon(aes(ymin=min, ymax=max), alpha = 0.5, color = NA) +
+  geom_line(size = 1) +
+  xlab("Task time (min)") + ylab("WTW (s)") + 
+  myTheme +
+  facet_grid(.~cbal) +
+  scale_x_continuous(breaks = seq(0, blockSec * nBlock, by = blockSec),
+                     labels = seq(0, blockSec * nBlock, by = blockSec) / 60) +
+  scale_y_continuous(breaks = c(0,  10, 20), limits = c(0, 20))  +
+  scale_fill_manual(values = conditionColors) + 
+  scale_color_manual(values = conditionColors) +
+  theme(legend.position =  "none")
+ggsave("figures/MFPlot/wtw_timecourse.pdf", width = 5, height = 3)
+ggsave("figures/MFPlot/wtw_timecourse.png", width = 5, height = 3) 
+
   ####################### separate analysis for the first and second two blocks ############
   MFResults = MFAnalysis(isTrct = T)
   # plot the first two blocks and the second two blocks separately 
   blockStats = MFResults[['blockStats']]
+  blockStats$block = ifelse(blockStats$blockNum <= 2, "Block1-2", "Block3-4")
   survCurve_ = MFResults$survCurve_
+  
+  blockStats %>% group_by(condition, block) %>%
+    summarise(median(muWTW), IQR(muWTW), median(stdWTW), IQR(stdWTW))
+  ## anova test
+  res.aov2 <- aov(muWTW ~ condition * block + Error(id / (condition * block)), data = blockStats)
+  summary(res.aov2)
+  
+  # this seems to be the better option
+  library("nlme")
+  lme_res = lme(muWTW ~ condition * block, data = blockStats, random = ~ 1 | id)
+  anova(lme_res)
+  
+  # post hoc analysis
+  wilcox.test( blockStats[blockStats$condition == "HP" & blockStats$block == "Block1-2", "muWTW"],
+               blockStats[blockStats$condition == "LP" & blockStats$block == "Block1-2", "muWTW"], paired = T)
+
+  wilcox.test( blockStats[blockStats$condition == "HP" & blockStats$block == "Block3-4", "muWTW"],
+               blockStats[blockStats$condition == "LP" & blockStats$block == "Block3-4", "muWTW"], paired = T)  
   
   ############## plot AUCs in two environments #############
   data.frame(muWTWHP = blockStats$muWTW[blockStats$condition == 'HP'],
@@ -84,10 +133,20 @@ MFPlot = function(){
     xlab("LP muAUC / (s)") + ylab("HP muAUC / (s)") + 
     myTheme + xlim(c(-1,31)) + ylim(c(-1,31)) + 
     xlab("LP AUC (s)") + ylab("HP AUC (s)") + facet_grid(~block)
-  ggsave("figures/MFPlot/muWTW_comparison.eps", width = 4, height = 4)
+  ggsave("figures/MFPlot/muWTW_comparison.pdf", width = 4, height = 4)
   ggsave("figures/MFPlot/muWTW_comparison.png", width = 4, height = 4)
   
   ################### plot CIPs in two environments ###################
+  res.aov2 <- aov(stdWTW ~ condition * block + Error(id / (condition * block)), data = blockStats)
+  summary(res.aov2)
+  
+  wilcox.test( blockStats[blockStats$condition == "HP" & blockStats$block == "Block1-2", "stdWTW"],
+               blockStats[blockStats$condition == "LP" & blockStats$block == "Block1-2", "stdWTW"], paired = T)
+  
+  wilcox.test( blockStats[blockStats$condition == "HP" & blockStats$block == "Block3-4", "stdWTW"],
+               blockStats[blockStats$condition == "LP" & blockStats$block == "Block3-4", "stdWTW"], paired = T)  
+  
+  
   data.frame(stdWTWHP = blockStats$stdWTW[blockStats$condition == 'HP'],
              stdWTWLP = blockStats$stdWTW[blockStats$condition == 'LP'],
              cbal = blockStats$cbal[blockStats$condition == "HP"],
@@ -95,9 +154,9 @@ MFPlot = function(){
     ggplot(aes(stdWTWLP, stdWTWHP)) +
     geom_point(size = 5, shape = 21, stroke =1) +
     geom_abline(slope = 1, intercept = 0)  +
-    xlab(TeX("LP CIP (s^2)")) + ylab(TeX("HP CIP (s^2)")) + 
+    xlab(TeX("LP vWTW (s^2)")) + ylab(TeX("HP vWTW (s^2)")) + 
     myTheme + xlim(c(-1,16)) + ylim(c(-1,16)) + facet_grid(~block)
-  ggsave("figures/MFPlot/stdWTW_comparison.eps", width = 4, height = 4)
+  ggsave("figures/MFPlot/stdWTW_comparison.pdf", width = 4, height = 4)
   ggsave("figures/MFPlot/stdWTW_comparison.png", width = 4, height = 4)
   
   ################### plot CIP and AUC correlations ###################
@@ -159,26 +218,26 @@ MFPlot = function(){
   optim = rbind(optim, optim)
   optim$block = rep(c("Block1-2", "Block3-4"), each = nrow(optim) / 2)
   
-  ## test 
-  isSig12 = sapply(1 : length(kmGrid) , function(i)
-  {
-    t = kmGrid[i]
-    HP = plotData$survCurve[plotData$condition == "HP" & plotData$time == t & plotData$blockNum <= 2]
-    LP = plotData$survCurve[plotData$condition == "LP" & plotData$time == t & plotData$blockNum <= 2]
-    tempt = wilcox.test(HP, LP, paired = T)
-    ifelse(tempt$p.value < 0.05, 1.01, NA)
-  }
-  )
-  
-  isSig34 = sapply(1 : length(kmGrid) , function(i)
-  {
-    t = kmGrid[i]
-    HP = plotData$survCurve[plotData$condition == "HP" & plotData$time == t & plotData$blockNum > 2]
-    LP = plotData$survCurve[plotData$condition == "LP" & plotData$time == t & plotData$blockNum > 2]
-    tempt = wilcox.test(HP, LP, paired = T)
-    ifelse(tempt$p.value < 0.05, 1.01, NA)
-  }
-  )
+  # ## test 
+  # isSig12 = sapply(1 : length(kmGrid) , function(i)
+  # {
+  #   t = kmGrid[i]
+  #   HP = plotData$survCurve[plotData$condition == "HP" & plotData$time == t & plotData$blockNum <= 2]
+  #   LP = plotData$survCurve[plotData$condition == "LP" & plotData$time == t & plotData$blockNum <= 2]
+  #   tempt = wilcox.test(HP, LP, paired = T)
+  #   ifelse(tempt$p.value < 0.05, 1.01, NA)
+  # }
+  # )
+  # 
+  # isSig34 = sapply(1 : length(kmGrid) , function(i)
+  # {
+  #   t = kmGrid[i]
+  #   HP = plotData$survCurve[plotData$condition == "HP" & plotData$time == t & plotData$blockNum > 2]
+  #   LP = plotData$survCurve[plotData$condition == "LP" & plotData$time == t & plotData$blockNum > 2]
+  #   tempt = wilcox.test(HP, LP, paired = T)
+  #   ifelse(tempt$p.value < 0.05, 1.01, NA)
+  # }
+  # )
   
   
   sigData = data.frame(
@@ -196,14 +255,13 @@ MFPlot = function(){
     geom_line(data = optim, aes(t, surv, color = condition, linetype = condition, alpha = condition), size = 1.2) +
     geom_line(data = data.frame(t = kmGrid[kmGrid > 2],surv = 1),
               aes(t, surv), color = conditionColors[1], size = 1.2, inherit.aes = F, alpha = 0.8) + 
-    geom_point(data = sigData, aes(t, isSig), inherit.aes = F, color = "black", shape = 4, size = 0.8) + 
     scale_fill_manual(values = conditionColors) +
     scale_color_manual(values = conditionColors) +
     scale_linetype_manual(values = c("solid", "dotted")) +
     scale_alpha_manual(values = c(0.8, 1))+
     xlab("Elapsed time (s)") + ylab("Survival rate") + myTheme +
     theme(legend.position = "none") 
-    ggsave("figures/MFPlot/survival_curve.eps", width = 4, height = 4)
+    ggsave("figures/MFPlot/survival_curve.pdf", width = 4, height = 4)
     ggsave("figures/MFPlot/survival_curve.png", width = 4, height = 4) 
   
 }

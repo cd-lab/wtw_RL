@@ -111,6 +111,30 @@ expSchematics = function(smallReward, iti, isPlot){
   }
   
   if(isPlot){
+    # plot PDF
+    # the end point in the LP condition is plotted separately 
+    plotData =  data.frame(
+      pdf = unlist(rewardDelayPDFs),
+      time = unlist(time),
+      condition = c(rep("HP", length(rewardDelayPDFs$HP)), rep("LP", length(rewardDelayPDFs$LP)))
+    )
+    
+    endPointData = plotData[plotData$time == max(time$LP) & plotData$condition == "LP",]
+
+    plotData$pdf[(plotData$time == max(time$LP) & plotData$condition == "LP")] = NA
+    plotData %>% ggplot(aes(time, pdf)) + geom_line(size = 1.5, aes(color = condition)) +
+      facet_grid(~condition)  + 
+      geom_point(data = endPointData, aes(time, pdf, color = condition), size = 2, inherit.aes = F) +
+      scale_x_continuous(breaks = c(0, max(delayMaxs)/ 2, max(delayMaxs)), labels = c("0", max(delayMaxs)/2, max(delayMaxs)),
+                         limits = c(0, max(delayMaxs) * 1.1)) + 
+      myTheme + xlab('Delay duration (s)') + ylab('Probability density') + 
+      theme(plot.title = element_text(hjust = 0.5, color = themeColor)) +
+      scale_color_manual(values = conditionColors) +
+      theme(legend.position = "none") + 
+      scale_y_continuous(breaks = c(0, 0.05), labels = c(0, 0.05), limits = c(0, 0.08)) 
+    ggsave('figures/expSchematics/PDF.png', width =4, height = 3)
+    ggsave('figures/expSchematics/PDF.pdf', width =4, height = 3)
+    
     # plot CDFs 
     ## here we extend the HP CDF to 32s for display purposes
     data.frame(CDF = c(0,c(rewardDelayCDFs$HP, rep(1, length(time$LP) - length(time$HP))), 0, rewardDelayCDFs$LP),
@@ -126,7 +150,7 @@ expSchematics = function(smallReward, iti, isPlot){
       scale_color_manual(values = conditionColors) +
       theme(legend.position = "none")
     
-    ggsave('figures/expSchematics/CDF.eps', width =4, height = 3)
+    ggsave('figures/expSchematics/CDF.pdf', width =4, height = 3)
     ggsave('figures/expSchematics/CDF.png', width =4, height = 3)
     
     # plot reward rates
@@ -145,7 +169,7 @@ expSchematics = function(smallReward, iti, isPlot){
                          limits = c(0, max(delayMaxs) * 1.1)) +
       scale_color_manual(values = conditionColors) +
       theme(legend.position = "none") + facet_grid(~condition)
-    ggsave("figures/expSchematics/reward_rate.eps", width = 4, height = 3)
+    ggsave("figures/expSchematics/reward_rate.pdf", width = 4, height = 3)
     ggsave("figures/expSchematics/reward_rate.png", width = 4, height = 3)
     
     # plot prior belief
@@ -165,7 +189,7 @@ expSchematics = function(smallReward, iti, isPlot){
       scale_y_continuous(breaks = NULL) + xlab("t") + ylab("Initial Value") +
       myTheme +
       theme(text = element_text(size=20))
-    ggsave('figures/expSchematics/prior.eps', width = 3, height = 3)
+    ggsave('figures/expSchematics/prior.pdf', width = 3, height = 3)
     ggsave('figures/expSchematics/prior.png', width = 3, height = 3)
     
     
@@ -186,7 +210,7 @@ expSchematics = function(smallReward, iti, isPlot){
                          limits = c(0, max(delayMaxs) * 1.1)) +
       xlab("Trial time (s)") + ylab("Subjective value (¢)")  + 
       theme(legend.position = "none") + facet_grid(~condition)
-    ggsave("figures/expSchematics/subjective.eps", width = 4, height = 3)
+    ggsave("figures/expSchematics/subjective.pdf", width = 4, height = 3)
     ggsave("figures/expSchematics/subjective.png", width = 4, height = 3)      
   }
   

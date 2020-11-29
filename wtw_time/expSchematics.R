@@ -99,8 +99,9 @@ for(cIdx in 1 : 2){
   subjectValues[[condition]] = thisSubjectValues
 }
 
-# plot 
+ # plot 
 if(isPlot){
+  
   # plot CDFs 
   library('ggplot2')
   source('subFxs/plotThemes.R')
@@ -118,8 +119,25 @@ if(isPlot){
     theme(plot.title = element_text(hjust = 0.5),
           legend.position = "none") +
     scale_color_manual(values = conditionColors) 
-  ggsave('figures/expSchematics/CDF.eps', width =4, height = 3)
+  ggsave('figures/expSchematics/CDF.pdf', width =4, height = 3)
   ggsave('figures/expSchematics/CDF.png', width =4, height = 3)
+  
+  # plot PDFs
+  tempt = unlist(rewardDelayPDFs)
+  tempt[tempt == 0] = NA
+  data.frame(
+    PDF = tempt,
+    time = unlist(time),
+    condition = c(rep("HP", length(rewardDelayPDFs$HP)), rep("LP", length(rewardDelayPDFs$LP)))
+  ) %>% ggplot(aes(time, PDF)) + geom_point(size = 1.5, aes(color = condition)) + facet_grid(~condition) +
+    scale_y_continuous(breaks = c(0,0.5,1)) + 
+    scale_x_continuous(breaks = c(0, max(delayMaxs)/ 2, max(delayMaxs)), labels = c("0", max(delayMaxs)/2, max(delayMaxs)),
+                       limits = c(0, max(delayMaxs) * 1.1)) + 
+    myTheme + xlab('Delay duration (s)') + ylab('Probability mass') + 
+    theme(plot.title = element_text(hjust = 0.5, color = themeColor)) +
+    scale_color_manual(values = conditionColors) +
+    theme(legend.position = "none") + scale_y_continuous(breaks = c(0, 0.2), limits = c(0, 0.4), labels = c(0, 0.2))
+  ggsave('figures/expSchematics/PDF.pdf', width =4, height = 3)
   
   # plot reward rates
   optimData = data.frame(condition = c("HP", "LP"), waitThreshold = as.double(optimWaitThresholds))
@@ -136,7 +154,7 @@ if(isPlot){
     theme(plot.title = element_text(hjust = 0.5, color = themeColor)) +
     scale_color_manual(values = conditionColors) +
     theme(legend.position = "none") + facet_grid(~condition)
-  ggsave("figures/expSchematics/reward_rate.eps", width = 4, height = 3)
+  ggsave("figures/expSchematics/reward_rate.pdf", width = 4, height = 3)
   ggsave("figures/expSchematics/reward_rate.png", width = 4, height = 3)
   
   # plot subjective value of waiting 
@@ -151,7 +169,7 @@ if(isPlot){
     scale_linetype_manual(values = c(1, 2)) +
     xlab("Elapsed time (s)") + ylab("Subjective value (¢)")  + 
     theme(legend.position = "none") + facet_grid(~condition)
-  ggsave("figures/expSchematics/subjective.eps", width = 4, height = 3)
+  ggsave("figures/expSchematics/subjective.pdf", width = 4, height = 3)
   ggsave("figures/expSchematics/subjective.png", width = 4, height = 3)       
 }
 

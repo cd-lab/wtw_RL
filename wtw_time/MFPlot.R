@@ -13,7 +13,8 @@ load("expParas.RData")
 
 # normative analysis
 iti = 2
-normResults = expSchematics(0, iti, F)
+source('expSchematics.R')
+normResults = (0, iti, F)
 optimWaitThresholds = normResults$optimWaitThresholds
 nCondition = length(conditions)
 
@@ -25,18 +26,24 @@ nSub = nrow(sumStats)
 ## use background color to distinguish used and excluded data 
 colorData = data.frame(
   xmin = c(0, blockSec), xmax = c(blockSec - max(delayMaxs), nBlock * blockSec - max(delayMaxs)),
-  condition = conditions
+  condition = c(conditions[2], conditions[1])
 )
 greyData = data.frame(
   xmin = 1:2 * blockSec - max(delayMaxs), xmax = 1:2 * blockSec
 )
-timeWTW_[[1]][length(timeWTW_[[1]])] = NA
-data.frame(wtw = unlist(timeWTW_),
+
+plotData = data.frame(wtw = unlist(timeWTW_),
            time = rep(seq(0, blockSec * nBlock -1, by = 1), nSub),
            condition = rep(rep(c("LP", "HP"), each = length(tGrid))), nSub) %>%
   group_by(condition, time) %>%
   dplyr::summarise(mu = mean(wtw, na.rm = F), se = sd(wtw, na.rm = F) / sqrt(sum(!is.na(wtw))),
-                   min = mu- se, max = mu + se) %>%
+                   min = mu- se, max = mu + se) %>% ungroup()
+# reset at the block onset
+plotData$mu[plotData$time %in% (1:2 * blockSec - 1)] = NA
+plotData$min[plotData$time %in% (1:2 * blockSec - 1)] = NA
+plotData$max[plotData$time %in% (1:2 * blockSec - 1)] = NA
+
+plotData %>%
   ggplot(aes(time, mu)) +
   geom_rect(colorData, mapping = aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = 20, fill = condition),
             inherit.aes = F) + 
@@ -50,7 +57,24 @@ data.frame(wtw = unlist(timeWTW_),
   theme(plot.title = element_text(face = "bold", hjust = 0.5, color = themeColor)) +
   scale_fill_manual(values = conditionColorBacks) + 
   theme(legend.position = "none")
-ggsave("figures/MFPlot/wtw_timecourse.eps", width = 5, height = 3) 
+ggsave("figures/MFPlot/wtw_timecourse.pdf", width = 5, height = 3) 
+ggsave("figures/MFPlot/wtw_timecourse.png", width = 5, height = 3) 
+
+
+# another version
+plotData %>%
+  ggplot(aes(time, mu, color = condition, fill = condition))  +
+  geom_rect(data = greyData, aes(xmin = xmin, xmax = xmax), ymin = 0, ymax = 20,
+            fill = "#d9d9d9", inherit.aes = F) + 
+  geom_ribbon(aes(ymin=min, ymax=max), alpha = 0.5, color = NA) +
+  geom_line(size = 0.5) +
+  xlab("Task time (min)") + ylab("WTW (s)") + 
+  scale_y_continuous(breaks = c(0, 10, 20), limits = c(0, 20)) +
+  myTheme + scale_x_continuous(breaks = c(0, 600, 1200), labels = c(0, 600, 1200) / 60 ) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, color = themeColor)) +
+  scale_color_manual(values = conditionColors) + scale_fill_manual(values = conditionColors) +
+  theme(legend.position = "none")
+ggsave("figures/MFPlot/wtw_timecourse.pdf", width = 5, height = 3) 
 ggsave("figures/MFPlot/wtw_timecourse.png", width = 5, height = 3) 
 
 ################## plot AUCs in two environments ###################
@@ -58,8 +82,8 @@ MFResults = MFAnalysis(isTrct = T)
 sumStats = MFResults[['sumStats']]
 wTest = wilcox.test( sumStats[sumStats$condition == "HP", "muWTW"],
                      sumStats[sumStats$condition == "LP", "muWTW"],paired = T)
-sumStats %>% group_by(condition) %>% summarise(median = median(muWTW))
-aovRes <- aov(muWTW ~ (condition) + Error(ID/condition), contrasts = contr.sum, data = sumStats)
+sumStats %>% group_by(condition) %>% summarise(median = median(muWTW),
+                                               IQR(muWTW))
 data.frame(muWTWHP = sumStats$muWTW[sumStats$condition == 'HP'],
            muWTWLP = sumStats$muWTW[sumStats$condition == 'LP']) %>%
   ggplot(aes(muWTWLP, muWTWHP)) +
@@ -69,7 +93,7 @@ data.frame(muWTWHP = sumStats$muWTW[sumStats$condition == 'HP'],
   xlab("LP AUC (s)") + ylab("HP AUC (s)") + 
   myTheme + xlim(c(-1,17)) + ylim(c(-1,17)) +
   theme(plot.title = element_text(face = "bold", hjust = 0.5, color = themeColor)) 
-ggsave("figures/MFPlot/muWTW_comparison.eps", width = 4, height = 4)
+ggsave("figures/MFPlot/muWTW_comparison.pdf", width = 4, height = 4)
 ggsave("figures/MFPlot/muWTW_comparison.png", width = 4, height = 4)
 
 
@@ -77,17 +101,18 @@ ggsave("figures/MFPlot/muWTW_comparison.png", width = 4, height = 4)
 # test
 wTest = wilcox.test( sumStats[sumStats$condition == "HP", "stdWTW"],
                      sumStats[sumStats$condition == "LP", "stdWTW"],paired = T)
-sumStats %>% group_by(condition) %>% summarise(median = median(stdWTW))
-aovRes <- aov(stdWTW ~ (condition) + Error(ID/condition), contrasts = contr.sum, data = sumStats)
+sumStats %>% group_by(condition) %>% summarise(median = median(stdWTW),
+                                               IQR = IQR(stdWTW))
 # plot
 data.frame(stdWTWHP = sumStats$stdWTW[sumStats$condition == 'HP'],
            stdWTWLP = sumStats$stdWTW[sumStats$condition == 'LP']) %>%
   ggplot(aes(stdWTWLP, stdWTWHP)) +
   geom_point(size = 5, shape = 21, stroke =1) +
   geom_abline(slope = 1, intercept = 0)  +
-  xlab(TeX("LP CIP (s^2)")) + ylab(TeX("HP CIP (s^2)")) + 
-  myTheme + xlim(c(-1,6)) + ylim(c(-1,6)) 
-ggsave("figures/MFPlot/stdWTW_comparison.eps", width = 4, height = 4)
+  xlab(TeX("LP vWTW (s^2)")) + ylab(TeX("HP vWTW (s^2)")) + 
+  myTheme + xlim(c(-1,6)) + ylim(c(-1,6)) +
+  annotate("text", x = 5, y = 1, label = sprintf('p = %0.3f*', wTest$p.value))
+ggsave("figures/MFPlot/stdWTW_comparison.pdf", width = 4, height = 4)
 ggsave("figures/MFPlot/stdWTW_comparison.png", width = 4, height = 4)
 
 ################### plot CIP and AUC correlations ###################
@@ -122,19 +147,19 @@ survCurve_ = MFResults$survCurve_
 plotData = data.frame(survCurve = unlist(survCurve_),
                       time = rep(kmGrid, nSub * nCondition),
                       condition = rep(sumStats$condition, each = length(kmGrid)))
-isSig = lapply(1 : length(kmGrid) , function(i)
-{
-  t = kmGrid[i]
-  HP = plotData$survCurve[plotData$condition == "HP" & plotData$time == t]
-  LP = plotData$survCurve[plotData$condition == "LP" & plotData$time == t]
-  tempt = wilcox.test(HP, LP, paired = T)
-  tempt$p.value
-}
-)
-sigData = data.frame(
-  isSig = ifelse(isSig < 0.05, 1.01, NA),
-  t = kmGrid
-)
+# isSig = lapply(1 : length(kmGrid) , function(i)
+# {
+#   t = kmGrid[i]
+#   HP = plotData$survCurve[plotData$condition == "HP" & plotData$time == t]
+#   LP = plotData$survCurve[plotData$condition == "LP" & plotData$time == t]
+#   tempt = wilcox.test(HP, LP, paired = T)
+#   tempt$p.value
+# }
+# )
+# sigData = data.frame(
+#   isSig = ifelse(isSig < 0.05, 1.01, NA),
+#   t = kmGrid
+# )
 # plot
 plotData %>%
   group_by(condition, time) %>%
@@ -144,12 +169,11 @@ plotData %>%
   geom_line(data = optim, aes(t, surv, color = condition, linetype = condition, alpha = condition), size = 1.2) +
   geom_line(data = data.frame(t = kmGrid[kmGrid > 2],surv = 1),
             aes(t, surv), color = conditionColors[1], size = 1.2, inherit.aes = F, alpha = 0.8) + 
-  geom_point(data = sigData, aes(t, isSig), inherit.aes = F, color = "black", shape = 4, size = 0.8) + 
   scale_fill_manual(values = conditionColors) +
   scale_color_manual(values = conditionColors) +
   scale_linetype_manual(values = c("solid", "dotted")) +
   scale_alpha_manual(values = c(0.8, 1))+
   xlab("Elapsed time (s)") + ylab("Survival rate") + myTheme +
   theme(legend.position = "none") 
-ggsave("figures/MFPlot/survival_curve.eps", width = 4, height = 4)
+ggsave("figures/MFPlot/survival_curve.pdf", width = 4, height = 4)
 ggsave("figures/MFPlot/survival_curve.png", width = 4, height = 4) 

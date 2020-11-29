@@ -65,7 +65,7 @@ MFAnalysis = function(isTrct){
     # load (and truncate) trialData for this individual
     id = ids[sIdx]
     thisTrialData = trialData[[id]]
-    trialPlots(thisTrialData)
+    # trialPlots(thisTrialData)
     if(isTrct){
       trctLine = blockSec - max(delayMaxs)
       # truncate trials completed after tractline in each block

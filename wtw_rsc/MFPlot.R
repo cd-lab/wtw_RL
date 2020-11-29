@@ -43,8 +43,9 @@ isSig = lapply(1 : length(tGrid), function(i) {
 plotData = plotData %>%
   group_by(condition, time) %>%
   dplyr::summarise(mu = mean(wtw, na.rm = F), se = sd(wtw, na.rm = F) / sqrt(sum(!is.na(wtw))),
-                   min = mu- se, max = mu + se) %>% ungroup()
+                   min = mu - se, max = mu + se) %>% ungroup()
 
+# reset at the block onset
 plotData$mu[plotData$time %in% (1:3 * blockSec - 1)] = NA
 plotData$min[plotData$time %in% (1:3 * blockSec - 1)] = NA
 plotData$max[plotData$time %in% (1:3 * blockSec - 1)] = NA
@@ -56,8 +57,6 @@ plotData %>% ggplot(aes(time, mu, color = condition)) +
             aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = 16), fill = "#d9d9d9", inherit.aes = F) +
   geom_ribbon(aes(ymin=min, ymax=max, fill = condition, color = NA), alpha = 0.5) +
   geom_line(aes(color = condition), size = 1) +
-  geom_point(data = data.frame(t = tGrid, isSig = ifelse(unlist(isSig) < 0.05, 16, NA)),
-             aes(t, isSig), inherit.aes = F, shape = 4) +
   xlab("Task time (min)") + ylab("WTW (s)") + 
   myTheme + ylim(0, 16)  +
   theme(plot.title = element_text(face = "bold", hjust = 0.5, color = themeColor)) +
@@ -65,7 +64,9 @@ plotData %>% ggplot(aes(time, mu, color = condition)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = conditionColors) +
   scale_color_manual(values = conditionColors)
-ggsave("figures/MFPlot/wtw_timecourse.eps", width = 5, height = 3) 
+# geom_point(data = data.frame(t = tGrid, isSig = ifelse(unlist(isSig) < 0.05, 16, NA)),
+#            aes(t, isSig), inherit.aes = F, shape = 4)
+ggsave("figures/MFPlot/wtw_timecourse.pdf", width = 5, height = 3) 
 ggsave("figures/MFPlot/wtw_timecourse.png", width = 5, height = 3) 
 
 
@@ -76,7 +77,7 @@ aovRes = aov(muWTW ~ condition, data = sumStats)
 blockStats = MFResults[['blockStats']]
 blockStats$blockNum = as.numeric(blockStats$blockNum)
 
-sumStats %>% group_by(condition) %>% summarise(median(muWTW))
+sumStats %>% group_by(condition) %>% summarise(median(muWTW),IQR(muWTW))
 wilcox.test(sumStats$muWTW[sumStats$condition == "HP"],
             sumStats$muWTW[sumStats$condition == "LP"])
 sumStats %>% ggplot(aes(condition, muWTW))  +
@@ -89,25 +90,25 @@ sumStats %>% ggplot(aes(condition, muWTW))  +
   scale_y_continuous(breaks = c(0, 12, 24), limits = c(0, 26)) +
   scale_fill_manual(values = conditionColors) +
   theme(legend.position = "none") + xlab("")
-ggsave("figures/MFPlot/muWTW_comparison.eps", width = 4, height = 4)
+ggsave("figures/MFPlot/muWTW_comparison.pdf", width = 4, height = 4)
 ggsave("figures/MFPlot/muWTW_comparison.png", width = 4, height = 4)
 
 # plot CIP
 sumStats %>% group_by(condition) %>% summarise(median(stdWTW))
-aovRes = aov(stdWTW ~ condition, data = sumStats)
+sumStats %>% group_by(condition) %>% summarise(median(stdWTW),IQR(stdWTW))
 wilcox.test(sumStats$stdWTW[sumStats$condition == "HP"],
             sumStats$stdWTW[sumStats$condition == "LP"])
 sumStats %>% ggplot(aes(condition, stdWTW))  +
   geom_dotplot(binaxis='y', stackdir='center', aes(fill = condition)) + 
   stat_compare_means(comparisons = list(c("HP", "LP")),
                      aes(label = ..p.signif..), label.x = 1.5, symnum.args= symnum.args,
-                     bracket.size = 1, size = 6, label.y = 10) + ylab(TeX("CIP ($s^2$)")) + 
+                     bracket.size = 1, size = 6, label.y = 10) + ylab(TeX("vWTW ($s^2$)")) + 
   myTheme  + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, color = themeColor)) + 
   scale_y_continuous(breaks = c(0, 5, 10), limits = c(0, 11)) +
   scale_fill_manual(values = conditionColors) +
   theme(legend.position = "none") + xlab("")
-ggsave("figures/MFPlot/stdWTW_comparison.eps", width = 4, height = 4)
+ggsave("figures/MFPlot/stdWTW_comparison.pdf", width = 4, height = 4)
 ggsave("figures/MFPlot/stdWTW_comparison.png", width = 4, height = 4)
 
 # correlation between 
@@ -141,19 +142,19 @@ survCurve_ = MFResults$survCurve_
 plotData = data.frame(survCurve = unlist(survCurve_),
                       time = rep(kmGrid, nSub),
                       condition = rep(sumStats$condition, each = length(kmGrid)))
-isSig = lapply(1 : length(kmGrid) , function(i)
-{
-  t = kmGrid[i]
-  HP = plotData$survCurve[plotData$condition == "HP" & plotData$time == t]
-  LP = plotData$survCurve[plotData$condition == "LP" & plotData$time == t]
-  tempt = wilcox.test(HP, LP)
-  tempt$p.value
-}
-  )
-sigData = data.frame(
-  t = kmGrid,
-  isSig = ifelse(unlist(isSig) < 0.05, 1.02, NA)
-)
+# isSig = lapply(1 : length(kmGrid) , function(i)
+# {
+#   t = kmGrid[i]
+#   HP = plotData$survCurve[plotData$condition == "HP" & plotData$time == t]
+#   LP = plotData$survCurve[plotData$condition == "LP" & plotData$time == t]
+#   tempt = wilcox.test(HP, LP)
+#   tempt$p.value
+# }
+#   )
+# sigData = data.frame(
+#   t = kmGrid,
+#   isSig = ifelse(unlist(isSig) < 0.05, 1.02, NA)
+# )
 
 
 ## plot
@@ -166,15 +167,16 @@ plotData %>%
   geom_line(data = optim, aes(t, surv, color = condition, linetype = condition, alpha = condition), size = 1.2) +
   geom_line(data = data.frame(t = kmGrid[kmGrid > 2],surv = 1),
             aes(t, surv), color = conditionColors[1], size = 1.2, inherit.aes = F, alpha = 0.8) + 
-  geom_point(data = sigData, aes(t, isSig), inherit.aes = F, color = "black", shape = 4, size = 0.8) + 
   scale_fill_manual(values = conditionColors) +
   scale_color_manual(values = conditionColors) +
   scale_linetype_manual(values = c("solid", "dotted")) +
   scale_alpha_manual(values = c(0.8, 1))+
   xlab("Elapsed time (s)") + ylab("Survival rate") + myTheme +
     theme(legend.position = "none") 
-ggsave("figures/MFPlot/survival_curve.eps", width = 4, height = 4)
+ggsave("figures/MFPlot/survival_curve.pdf", width = 4, height = 4)
 ggsave("figures/MFPlot/survival_curve.png", width = 4, height = 4) 
+
+# geom_point(data = sigData, aes(t, isSig), inherit.aes = F, color = "black", shape = 4, size = 0.8) 
 
 # # mixed effect anova, I should be more interested in non-stressed. 
 # fit = lmer(muWTW ~  condition * blockNum + (1 | id), data)
