@@ -90,7 +90,7 @@ sumStats %>% ggplot(aes(condition, muWTW))  +
   scale_y_continuous(breaks = c(0, 12, 24), limits = c(0, 26)) +
   scale_fill_manual(values = conditionColors) +
   theme(legend.position = "none") + xlab("")
-ggsave("figures/MFPlot/muWTW_comparison.pdf", width = 4, height = 4)
+ggsave("figures/MFPlot/muWTW_comparison.eps", width = 4, height = 4)
 ggsave("figures/MFPlot/muWTW_comparison.png", width = 4, height = 4)
 
 # plot CIP
@@ -108,7 +108,7 @@ sumStats %>% ggplot(aes(condition, stdWTW))  +
   scale_y_continuous(breaks = c(0, 5, 10), limits = c(0, 11)) +
   scale_fill_manual(values = conditionColors) +
   theme(legend.position = "none") + xlab("")
-ggsave("figures/MFPlot/stdWTW_comparison.pdf", width = 4, height = 4)
+ggsave("figures/MFPlot/stdWTW_comparison.eps", width = 4, height = 4)
 ggsave("figures/MFPlot/stdWTW_comparison.png", width = 4, height = 4)
 
 # correlation between 

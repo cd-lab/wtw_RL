@@ -93,7 +93,7 @@ data.frame(muWTWHP = sumStats$muWTW[sumStats$condition == 'HP'],
   xlab("LP AUC (s)") + ylab("HP AUC (s)") + 
   myTheme + xlim(c(-1,17)) + ylim(c(-1,17)) +
   theme(plot.title = element_text(face = "bold", hjust = 0.5, color = themeColor)) 
-ggsave("figures/MFPlot/muWTW_comparison.pdf", width = 4, height = 4)
+ggsave("figures/MFPlot/muWTW_comparison.eps", width = 4, height = 4)
 ggsave("figures/MFPlot/muWTW_comparison.png", width = 4, height = 4)
 
 
@@ -112,7 +112,7 @@ data.frame(stdWTWHP = sumStats$stdWTW[sumStats$condition == 'HP'],
   xlab(TeX("LP vWTW (s^2)")) + ylab(TeX("HP vWTW (s^2)")) + 
   myTheme + xlim(c(-1,6)) + ylim(c(-1,6)) +
   annotate("text", x = 5, y = 1, label = sprintf('p = %0.3f*', wTest$p.value))
-ggsave("figures/MFPlot/stdWTW_comparison.pdf", width = 4, height = 4)
+ggsave("figures/MFPlot/stdWTW_comparison.eps", width = 4, height = 4)
 ggsave("figures/MFPlot/stdWTW_comparison.png", width = 4, height = 4)
 
 ################### plot CIP and AUC correlations ###################

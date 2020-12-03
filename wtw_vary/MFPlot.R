@@ -133,7 +133,7 @@ ggsave("figures/MFPlot/wtw_timecourse.png", width = 5, height = 3)
     xlab("LP muAUC / (s)") + ylab("HP muAUC / (s)") + 
     myTheme + xlim(c(-1,31)) + ylim(c(-1,31)) + 
     xlab("LP AUC (s)") + ylab("HP AUC (s)") + facet_grid(~block)
-  ggsave("figures/MFPlot/muWTW_comparison.pdf", width = 4, height = 4)
+  ggsave("figures/MFPlot/muWTW_comparison.eps", width = 4, height = 4)
   ggsave("figures/MFPlot/muWTW_comparison.png", width = 4, height = 4)
   
   ################### plot CIPs in two environments ###################
@@ -156,7 +156,7 @@ ggsave("figures/MFPlot/wtw_timecourse.png", width = 5, height = 3)
     geom_abline(slope = 1, intercept = 0)  +
     xlab(TeX("LP vWTW (s^2)")) + ylab(TeX("HP vWTW (s^2)")) + 
     myTheme + xlim(c(-1,16)) + ylim(c(-1,16)) + facet_grid(~block)
-  ggsave("figures/MFPlot/stdWTW_comparison.pdf", width = 4, height = 4)
+  ggsave("figures/MFPlot/stdWTW_comparison.eps", width = 4, height = 4)
   ggsave("figures/MFPlot/stdWTW_comparison.png", width = 4, height = 4)
   
   ################### plot CIP and AUC correlations ###################

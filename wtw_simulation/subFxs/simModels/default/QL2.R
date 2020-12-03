@@ -18,12 +18,11 @@
 # sellTime : [nTrialx1 num]  when the agent sells the token on each trial 
 # Qwaits_ : [20/40 x nTrial num] value of waiting at each second in each trial
 # V0_ : [nTrialx1 num] value of entering a pre-trial iti, namely t = 0
-
-QL2 = function(paras, condition, duration, normResults, delays){
+QL2 = function(paras, condition, duration, normResults, delays = c()){
   source("subFxs/taskFxs.R")
   
   # check whether delays have been given 
-  exist = exists("delays")
+  exist = length(delays) > 0
   
   # default settings 
   iti = 2
